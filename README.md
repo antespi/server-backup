@@ -95,6 +95,7 @@ Configuration
     2.  Customer name
     3.  Backends list
     4.  Set BAK_DEBUG to 0, to preform a real backup
+    5.  Set BAK_ENABLED to 1, to activate backup process
 
 
 
