@@ -43,18 +43,18 @@ BAK_PATH=`root_path`
 
 BAK_LOG_DIR=log
 BAK_CONFIG_DIR=config
-BAK_CONFIG-DIST_DIR=config-dist
+BAK_CONFIG_DIST_DIR=config-dist
 BAK_LIB_DIR=lib
 
 BAK_LOG_PATH="$BAK_PATH/$BAK_LOG_DIR"
 BAK_CONFIG_PATH="$BAK_PATH/$BAK_CONFIG_DIR"
-BAK_CONFIG-DIST_PATH="$BAK_PATH/$BAK_CONFIG-DIST_DIR"
+BAK_CONFIG_DIST_PATH="$BAK_PATH/$BAK_CONFIG_DIST_DIR"
 BAK_LIB_PATH="$BAK_PATH/$BAK_LIB_DIR"
 
-if [ ! -d "$BAK_CONFIG_PATH" ] && [ -d "$BAK_CONFIG-DIST_PATH"]; then
+if [ ! -d "$BAK_CONFIG_PATH" ] && [ -d "$BAK_CONFIG_DIST_PATH"]; then
    echo "INFO : Config directory not found"
-   echo "INFO : Creating config directory from '$BAK_CONFIG-DIST_DIR'"
-   /bin/cp -a "$BAK_CONFIG-DIST_PATH" "$BAK_CONFIG_PATH"
+   echo "INFO : Creating config directory from '$BAK_CONFIG_DIST_DIR'"
+   /bin/cp -a "$BAK_CONFIG_DIST_PATH" "$BAK_CONFIG_PATH"
 fi
 
 ### Configuration ##################################################
