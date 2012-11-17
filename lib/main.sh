@@ -617,7 +617,7 @@ environment_check() {
 executable_set() {
    local file=$1
 
-   if [ ! -f "$file" ]; then echo "ERROR: File '$file' not found. Please download again"; exit 1; fi
-   if [ ! -x "$file" ]; then echo "INFO: Setting '$file' executable"; chmod +x "$file"; fi;
+   if [ ! -f "$file" ]; then echo "ERROR : File '$file' not found. Please download again"; exit 1; fi
+   if [ ! -x "$file" ]; then echo "INFO : Setting '$file' executable"; chmod +x "$file"; fi;
 }
 
