@@ -183,5 +183,8 @@ AUTHOR
 ======
 
 Copyright (C) 2012<br />
-Antonio Espinosa <aespinosa at teachnova dot com><br />
-[Teachnova](http://www.teachnova.com)
+Antonio Espinosa<br />
+Email    : aespinosa at teachnova dot com<br />
+Twitter  : [@antespi](http://twitter.com/antespi)<br />
+LinkedIn : [Antonio Espinosa](http://es.linkedin.com/in/antonioespinosa)<br />
+Web      : [Teachnova](http://www.teachnova.com)
