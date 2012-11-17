@@ -120,6 +120,7 @@ fi
 
 ### MAIN #############################################
 
+# Setup (if needed)
 executable_set "$BAK_PATH/backup.sh"
 executable_set "$BAK_PATH/snapshot.sh"
 executable_set "$BAK_LIB_PATH/sr.sh"
@@ -130,9 +131,14 @@ $CHOWN_BIN root:root "$BAK_CONFIG_PATH/enc.key"
 # Check environment
 environment_check
 
-# Check directories and create if needed
-directories_create
+if [ $BAK_ENABLED -eq 0 ]; then
+   $ECHO_BIN "INFO : Backup is disabled by config. Please modify configuration in order to perform a backup"
+   $ECHO_BIN "INFO : Read README.md file to further information about Configuration"
+   exit 1
+fi
 
+# Check directories and create them (if needed)
+directories_create
 
 # Start log
 log_start_print
