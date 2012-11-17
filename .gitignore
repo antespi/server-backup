@@ -1,0 +1,8 @@
+# This file specifies intentionally untracked files that all Server-Backup git
+# repositories should ignore. It is recommended not to modify this file in your
+# local clone. Instead, use .git/info/exclude and add new records there as
+# needed.
+#
+# See gitignore(5) man page for more details
+#
+/config/

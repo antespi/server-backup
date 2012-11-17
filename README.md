@@ -1,7 +1,7 @@
 Server-Backup
 =============
 
-Backup system for Dedicated Servers or EC2 into different backends : S3, LOCAL, FTP, SFTP, USBHD, WEBDAV
+Backup system for Dedicated Servers or EC2 into different backends : S3, LOCAL, FTP, SFTP, USBHD, WEBDAV.
 Also support backup encryption using any algorithm supported by OpenSSL library.
 
 
@@ -16,8 +16,8 @@ Installation
 5.    Edit configuration files
 6.    Configure a cron file (/etc/cron.d/backup) like this
 
-       0  1 * *   *  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
-       0 22 * *   6  root  /root/server-backup/snapshot.sh &> /root/server-backup/last_snapshot.log
+    0  1 * *   *  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
+    0 22 * *   6  root  /root/server-backup/snapshot.sh &> /root/server-backup/last_snapshot.log
 
 7.    If local backend enabled (enabled by default), create an FTP (or SFTP) account for fetching backup with read acces to local folder (/backup/local by default)
 
@@ -134,7 +134,7 @@ This is what backup.sh script do each time is invoked by you or by a cron job
 11.  Delete old log files
 12.  Send a email report (if enabled)
 
-This is what snapshot.sh script do each time is invoked by you or by a cron job
+This is what snapshot.sh script do each time is invoked by you or by a cron job (TODO)
 
 1.   Remove historical files (for incremental backups) : /backup/historical
 2.   Make snapshot operation for each backend (backend specific process)
