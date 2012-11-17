@@ -13,19 +13,20 @@ Installation
 1.    Connect to your server (dedicated server or Amazon EC2) at a root ssh shell.
 2.    Go to root home : cd /root
 3.    Clone this repo : git clone https://github.com/antespi/server-backup.git
-4.    Set executable rights to backup.sh : chmod +x backup.sh
-5.    Execute it for first setup : ./backup.sh
-6.    Edit configuration files (see Configuration section below)
-7.    If AWS S3 backend enabled (enabled by default), you will need to get
+4.    Go to Server-Backup dir : cd server-backup
+5.    Set executable rights to backup.sh : chmod +x backup.sh
+6.    Execute it for first setup : ./backup.sh
+7.    Edit configuration files (see Configuration section below)
+8.    If AWS S3 backend enabled (enabled by default), you will need to get
 an AWS account, AWS credentials (accessKey and secretKey) and create
 an S3 Bucket. Be sure that user has enoght rights to get and put files
 to that S3 Bucket.
-8.    Configure a cron file (/etc/cron.d/backup) like this
+9.    Configure a cron file (/etc/cron.d/backup) like this
 
         0  1 * *   *  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
         0 22 * *   6  root  /root/server-backup/snapshot.sh &> /root/server-backup/last_snapshot.log
 
-9.    If local backend enabled (enabled by default), create an FTP (or SFTP)
+10.    If local backend enabled (enabled by default), create an FTP (or SFTP)
 account for fetching backup with read acces to local folder (/backup/local by default)
 
 
