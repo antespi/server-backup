@@ -43,12 +43,19 @@ BAK_PATH=`root_path`
 
 BAK_LOG_DIR=log
 BAK_CONFIG_DIR=config
+BAK_CONFIG-DIST_DIR=config-dist
 BAK_LIB_DIR=lib
 
 BAK_LOG_PATH="$BAK_PATH/$BAK_LOG_DIR"
 BAK_CONFIG_PATH="$BAK_PATH/$BAK_CONFIG_DIR"
+BAK_CONFIG-DIST_PATH="$BAK_PATH/$BAK_CONFIG-DIST_DIR"
 BAK_LIB_PATH="$BAK_PATH/$BAK_LIB_DIR"
 
+if [ ! -d "$BAK_CONFIG_PATH" ] && [ -d "$BAK_CONFIG-DIST_PATH"]; then
+   echo "INFO : Config directory not found"
+   echo "INFO : Creating config directory from '$BAK_CONFIG-DIST_DIR'"
+   /bin/cp -a "$BAK_CONFIG-DIST_PATH" "$BAK_CONFIG_PATH"
+fi
 
 ### Configuration ##################################################
 
@@ -113,16 +120,12 @@ fi
 
 ### MAIN #############################################
 
-setup=$1
+executable_set "$BAK_PATH/backup.sh"
+executable_set "$BAK_PATH/snapshot.sh"
+executable_set "$BAK_LIB_PATH/sr.sh"
 
-if [ -n "$setup" ]; then
-   executable_set "$BAK_PATH/backup.sh"
-   executable_set "$BAK_PATH/snapshot.sh"
-   executable_set "$BAK_LIB_PATH/sr.sh"
-
-   /bin/chmod 640 "$BAK_CONFIG_PATH/enc.key"
-   /bin/chown root:root "$BAK_CONFIG_PATH/enc.key"
-fi
+$CHMOD_BIN 640 "$BAK_CONFIG_PATH/enc.key"
+$CHOWN_BIN root:root "$BAK_CONFIG_PATH/enc.key"
 
 # Check environment
 environment_check
