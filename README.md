@@ -16,8 +16,8 @@ Installation
 5.    Edit configuration files
 6.    Configure a cron file (/etc/cron.d/backup) like this
 
-    0  1 * *   *  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
-    0 22 * *   6  root  /root/server-backup/snapshot.sh &> /root/server-backup/last_snapshot.log
+        0  1 * *   *  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
+        0 22 * *   6  root  /root/server-backup/snapshot.sh &> /root/server-backup/last_snapshot.log
 
 7.    If local backend enabled (enabled by default), create an FTP (or SFTP) account for fetching backup with read acces to local folder (/backup/local by default)
 
