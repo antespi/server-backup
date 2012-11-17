@@ -16,17 +16,17 @@ Installation
 4.    Set executable rights to backup.sh : chmod +x backup.sh
 5.    Execute it for first setup : ./backup.sh
 6.    Edit configuration files (see Configuration section below)
-7.    Configure a cron file (/etc/cron.d/backup) like this
+7.    If AWS S3 backend enabled (enabled by default), you will need to get
+an AWS account, AWS credentials (accessKey and secretKey) and create
+an S3 Bucket. Be sure that user has enoght rights to get and put files
+to that S3 Bucket.
+8.    Configure a cron file (/etc/cron.d/backup) like this
 
         0  1 * *   *  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
         0 22 * *   6  root  /root/server-backup/snapshot.sh &> /root/server-backup/last_snapshot.log
 
-8.    If local backend enabled (enabled by default), create an FTP (or SFTP)
+9.    If local backend enabled (enabled by default), create an FTP (or SFTP)
 account for fetching backup with read acces to local folder (/backup/local by default)
-9.    If AWS S3 backend enabled (enabled by default), you will need to get
-an AWS account, AWS credentials (accessKey and secretKey) and create
-an S3 Bucket. Be sure that user has enoght rights to get and put files
-to that S3 Bucket.
 
 
 
