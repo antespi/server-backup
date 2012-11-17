@@ -113,11 +113,23 @@ fi
 
 ### MAIN #############################################
 
+setup=$1
+
+if [ -n "$setup" ]; then
+   executable_set "$BAK_PATH/backup.sh"
+   executable_set "$BAK_PATH/snapshot.sh"
+   executable_set "$BAK_LIB_PATH/sr.sh"
+
+   /bin/chmod 640 "$BAK_CONFIG_PATH/enc.key"
+   /bin/chown root:root "$BAK_CONFIG_PATH/enc.key"
+fi
+
 # Check environment
 environment_check
 
 # Check directories and create if needed
 directories_create
+
 
 # Start log
 log_start_print
