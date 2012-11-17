@@ -10,24 +10,27 @@ Files to customize
 =============
 -   general.conf : General configuration
 
-    >    1.  Email addresses for notifications
-    >    2.  Customer name
-    >    3.  Backends list
+    1.  Email addresses for notifications
+    2.  Customer name
+    3.  Backends list
 
 -   config.conf : Server configuration sources
 
-    >    1.  Server configuration directories to backup
+    1.  Server configuration directories to backup
 
 -   database.conf : Database configuration
 
-    >    1.  Databases to backup
+    1.  Databases to backup
 
 - sources.conf : Data sources
-   - Server data directories to backup
+
+    1.  Server data directories to backup
 
 - s3.conf : S3 Backend configuration
-   - S3 bucket
-   - Remember to set credentials in lib/s3/aws-php/config.inc.php
+
+    1.  S3 bucket
+    2.  Remember to set credentials in lib/s3/aws-php/config.inc.php
 
 - local.conf : Local backend configuration
-   - Local path
+
+    1.  Local path
