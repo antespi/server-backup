@@ -1,7 +1,8 @@
 Server-Backup
 =============
 
-Backup system for Dedicated Servers or EC2 into different backends : S3, LOCAL, FTP, SFTP, USBHD, WEBDAV.
+Backup system for Dedicated Servers or EC2 into different backends :
+S3, LOCAL, FTP, SFTP, USBHD, WEBDAV.
 Also support backup encryption using any algorithm supported by OpenSSL library.
 
 
@@ -13,13 +14,18 @@ Installation
 2.    Go to root home : cd /root
 3.    Clone this repo : git clone https://github.com/antespi/server-backup.git
 4.    Copy distribution config folder to config : cp config-dist config
-5.    Edit configuration files
+5.    Edit configuration files (see Configuration section below)
 6.    Configure a cron file (/etc/cron.d/backup) like this
 
         0  1 * *   *  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
         0 22 * *   6  root  /root/server-backup/snapshot.sh &> /root/server-backup/last_snapshot.log
 
-7.    If local backend enabled (enabled by default), create an FTP (or SFTP) account for fetching backup with read acces to local folder (/backup/local by default)
+7.    If local backend enabled (enabled by default), create an FTP (or SFTP)
+account for fetching backup with read acces to local folder (/backup/local by default)
+8.    If AWS S3 backend enabled (enabled by default), you will need to get
+an AWS account, AWS credentials (accessKey and secretKey) and create
+an S3 Bucket. Be sure that user has enoght rights to get and put files
+to that S3 Bucket.
 
 
 
@@ -156,16 +162,26 @@ This is the first version, there are some tasks to do ;)
 LICENSE
 =======
 
-Server-Backup is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+Server-Backup is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
 
-Server-Backup is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+Server-Backup is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with Server-Backup. For license details you can read LICENSE.md file. Also you can read GPLv3 from [GNU Licenses](http://www.gnu.org/licenses/).
+You should have received a copy of the GNU General Public License along
+with Server-Backup. For license details you can read
+[LICENSE.md](https://github.com/antespi/server-backup/blob/master/LICENSE.md)
+file. Also you can read GPLv3 from [GNU Licenses](http://www.gnu.org/licenses/).
 
 
 
 AUTHOR
 ======
 
-Antonio Espinosa <aespinosa at teachnova dot com>
+Copyright (C) 2012<br />
+Antonio Espinosa <aespinosa at teachnova dot com><br />
 [Teachnova](http://www.teachnova.com)
