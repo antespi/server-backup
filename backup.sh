@@ -63,7 +63,7 @@ BAK_CONFIG_GENERAL_FILE="$BAK_CONFIG_PATH/general.conf"
 if [ -f "$BAK_CONFIG_GENERAL_FILE" ]; then
    . "$BAK_CONFIG_GENERAL_FILE"
 else
-   echo "ERROR : No general configuration file found '$BAK_CONFIG_GENERAL_FILE'"
+   echo "ERROR : No general configuration file found '$BAK_CONFIG_GENERAL_FILE'" 2>&1
    exit 1
 fi
 
@@ -72,7 +72,7 @@ BAK_CONFIG_SERVER_FILE="$BAK_CONFIG_PATH/config.conf"
 if [ -f "$BAK_CONFIG_SERVER_FILE" ]; then
    . "$BAK_CONFIG_SERVER_FILE"
 else
-   echo "ERROR : No server configuration file found '$BAK_CONFIG_SERVER_FILE'"
+   echo "ERROR : No server configuration file found '$BAK_CONFIG_SERVER_FILE'" 2>&1
    exit 1
 fi
 
@@ -81,7 +81,7 @@ BAK_CONFIG_DATABASE_FILE="$BAK_CONFIG_PATH/database.conf"
 if [ -f "$BAK_CONFIG_DATABASE_FILE" ]; then
    . "$BAK_CONFIG_DATABASE_FILE"
 else
-   echo "ERROR : No database configuration file found '$BAK_CONFIG_DATABASE_FILE'"
+   echo "ERROR : No database configuration file found '$BAK_CONFIG_DATABASE_FILE'" 2>&1
    exit 1
 fi
 
@@ -90,20 +90,10 @@ BAK_LIB_MAIN_FILE="$BAK_LIB_PATH/main.sh"
 if [ -f "$BAK_LIB_MAIN_FILE" ]; then
    . "$BAK_LIB_MAIN_FILE"
 else
-   echo "ERROR : No main lib file found '$BAK_LIB_MAIN_FILE'"
+   echo "ERROR : No main lib file found '$BAK_LIB_MAIN_FILE'" 2>&1
    exit 1
 fi
 
-# Load backends configuration files
-for backend in $BAK_BACKENDS; do
-   backend_file="$BAK_CONFIG_PATH/$backend.conf"
-   if [ -f "$backend_file" ]; then
-      . "$backend_file"
-   else
-      echo "ERROR : No backend ($backend) configuration file found '$backend_file'"
-      exit 1
-   fi
-done
 
 ### Global variables #############################################
 
@@ -118,8 +108,48 @@ backup_error=0
 
 ### Auxiliar functions #############################################
 
+# Load backends configuration files
+for backend in $BAK_BACKENDS; do
+   backend_file="$BAK_CONFIG_PATH/$backend.conf"
+   if [ -f "$backend_file" ]; then
+      . "$backend_file"
+   else
+      echo "ERROR : No backend ($backend) configuration file found '$backend_file'" 2>&1
+      exit 1
+   fi
+done
 
 ### MAIN #############################################
+
+# If any option ...
+
+if [ -n "$1" ]; then
+   case "$1" in
+      -v | --version )
+         version_show
+         exit 0
+         ;;
+
+      -h | --help )
+         help_show
+         exit 0
+         ;;
+
+      -c | --config )
+         config_show
+         exit 0
+         ;;
+
+      *)
+         $ECHO_BIN "ERROR : Option not supported" 2>&1
+         $ECHO_BIN 2>&1
+         help_show()
+         exit 1
+         ;;
+   esac
+fi
+
+# No option set, execute backup
 
 # Setup (if needed)
 executable_set "$BAK_PATH/backup.sh"

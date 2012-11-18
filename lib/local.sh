@@ -1,3 +1,4 @@
+#!/bin/bash
 # Server-Backup  Copyright (C) 2012
 #                Antonio Espinosa <aespinosa at teachnova dot com>
 #
@@ -16,24 +17,23 @@
 # You should have received a copy of the GNU General Public License
 # along with Server-Backup.  If not, see <http://www.gnu.org/licenses/>.
 
-BAK_S3_BUCKET="<your-s3-bucket-name>"
-BAK_S3_CURRENT_FILE="current"
-BAK_S3_INSTANCE="<fqdn-of-your-server>"
+local_config_show() {
+   cat << CONFIG
+Local Configuration
+------------------------------------------------
+Path         : $BAK_LOCAL_PATH
+Status       : OK
 
+CONFIG
+}
 
+local_init() {
+   # Do nothig
+}
 
-##################################################################
-# Do not edit below this line
+local_put() {
+   # Do nothig
+}
 
-BAK_S3_GET_BIN="/usr/bin/php $BAK_LIB_PATH/s3/aws-object_get.php $BAK_S3_BUCKET"
-BAK_S3_PUT_BIN="/usr/bin/php $BAK_LIB_PATH/s3/aws-object_put.php $BAK_S3_BUCKET"
-BAK_S3_EXISTS_BIN="/usr/bin/php $BAK_LIB_PATH/s3/aws-object_exists.php $BAK_S3_BUCKET"
+local_init
 
-BAK_S3_LIB_FILE="$BAK_LIB_PATH/s3.sh"
-
-if [ -f "$BAK_S3_LIB_FILE" ]; then
-   . "$BAK_S3_LIB_FILE"
-else
-   echo "ERROR : No S3 lib file found '$BAK_S3_LIB_FILE'" 2>&1
-   exit 1
-fi

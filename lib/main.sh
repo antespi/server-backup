@@ -19,6 +19,8 @@
 ##################################################################
 # BACKUP Constants
 
+BAK_VERSION=0.1-alpha
+
 BAK_TEMP_DIR=tmp
 BAK_OUTPUT_DIR=out
 BAK_HISTORICAL_DIR=historical
@@ -39,6 +41,14 @@ BAK_NULL_OUTPUT=/dev/null
 # BACKUP Data sources
 
 BAK_SOURCES_CONFIG_FILE=$BAK_PATH/$BAK_CONFIG_DIR/sources.conf
+
+##################################################################
+# BACKUP Email
+
+BAK_MAIL_FROM="$BAK_MAIL_COSTUMER - Server-Backup <$BAK_MAIL_FROM_USER>"
+BAK_MAIL_SUBJECT_ERR="[BACKUP] ERROR - $BAK_MAIL_COSTUMER"
+BAK_MAIL_SUBJECT_LOG="[BACKUP] LOG   - $BAK_MAIL_COSTUMER"
+BAK_MAIL_TEMP_FILE=$BAK_PATH/last_email.eml
 
 ##################################################################
 # BACKUP Backends
@@ -720,7 +730,7 @@ environment_check() {
    for index in `seq 0 1 $((${#BAK_ENVIRONMENT_LIST[@]} - 1))`; do
       file="${BAK_ENVIRONMENT_LIST[$index]}"
       if [ ! -x "$file" ]; then
-         $ECHO_BIN "ERROR : Environment checking : '$file' not found or not executable";
+         $ECHO_BIN "ERROR : Environment checking : '$file' not found or not executable" 2>&1
          exit 1
       fi
    done
@@ -733,3 +743,121 @@ executable_set() {
    if [ ! -x "$file" ]; then echo "INFO : Setting '$file' executable"; chmod +x "$file"; fi;
 }
 
+license_show() {
+   cat << LICENSE
+Server-Backup  Copyright (C) 2012
+Antonio Espinosa <aespinosa@teachnova.com> - TeachNova
+This program comes with ABSOLUTELY NO WARRANTY.
+This is free software, and you are welcome to redistribute it
+GPLv3 license conditions. Read LICENSE.md for more details.
+
+LICENSE
+}
+
+version_show() {
+   license_show
+   cat << VERSION
+Server-Backup v$BAK_VERSION
+
+VERSION
+}
+
+
+help_show() {
+   license_show
+   cat << HELP
+Backup system for Dedicated Servers or EC2 into different backends :
+S3, LOCAL, FTP, SFTP, USBHD, WEBDAV.
+Also support backup encryption using any algorithm supported by OpenSSL library.
+
+Usage : $0 [options]
+
+Options:
+   -v | --version : Show version
+   -h | --help    : Show this help
+   -c | --config  : Show current configuration
+
+Call with no options to execute backup process. With no options, no
+output is expected, but errors.
+
+HELP
+}
+
+config_show() {
+   local i=
+   local databases=
+   local extra=
+   local config=
+   local bef=
+   local index=0
+   local server=
+   local data=
+
+   license_show
+
+   for i in $(eval $BAK_MYSQL_DATABASE_LIST_CMD);
+   do
+      if $(contains "${BAK_DATABASE_DISALLOW[@]}" "$i"); then
+         continue
+      fi
+      if [ $BAK_DATABASE_ALLOW_ALL -eq 1 ] || $(contains "${BAK_DATABASE_ALLOW[@]}" "$i"); then
+#         if [ -z "$databases" ]; then databases="$i";
+#         else databases="$databases, $i"; fi
+         databases="${databases}\n${i}"
+      fi
+   done
+
+   for index in `seq 0 1 $((${#BAK_CONFIG_SERVER_SOURCES[@]} - 1))`; do
+      server="${server}\n${BAK_CONFIG_SERVER_SOURCES[$index]}"
+   done
+
+   if ! source_config_read "$BAK_SOURCES_CONFIG_FILE"; then
+      data="ERROR: Reading configuration (config file = $BAK_SOURCES_CONFIG_FILE)"
+   else
+      for index in `seq 0 1 $((${#BAK_SOURCES_CONFIG_SOURCE[@]} - 1))`; do
+         data="${data}\n${BAK_SOURCES_CONFIG_SOURCE[$index]}"
+      fi
+   fi
+
+   # Extra configuration, backends
+   for backend in $BAK_BACKENDS; do
+      bef="${backend}_config_show"
+      config=`$bef`
+      extra="${extra}\n${config}"
+   done
+
+
+   cat << CONFIG
+Paths:
+------------------------------------------------
+Configuration  : $BAK_CONFIG_PATH
+Data           : $BAK_DATA_PATH
+
+General config: (1 = enabled, 0 = disabled)
+-------------------------------------------------
+Enabled        : $BAK_ENABLED
+Debug          : $BAK_DEBUG
+Encryption     : $BAK_ENCRYPT
+
+Email on Error : $BAK_SEND_MAIL_ERR
+Email on OK    : $BAK_SEND_MAIL_LOG
+Email To       : $BAK_MAIL_TO
+Email Cc       : $BAK_MAIL_CC
+
+Backends       : $BAK_BACKENDS
+
+Server configuration:
+-------------------------------------------------
+$server
+
+Databases:
+-------------------------------------------------
+$databases
+
+Data:
+-------------------------------------------------
+$data
+
+$extra
+CONFIG
+}

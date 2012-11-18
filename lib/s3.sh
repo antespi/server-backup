@@ -18,6 +18,23 @@
 # along with Server-Backup.  If not, see <http://www.gnu.org/licenses/>.
 
 BAK_S3_CURRENT_PATH=
+BAK_S3_ERROR=0
+
+s3_config_show() {
+   local status=
+
+   if [ $BAK_S3_ERROR -eq 0 ]; then status="OK";
+   else status="ERROR ($BAK_S3_ERROR)"; fi
+
+   cat << CONFIG
+S3 Configuration
+------------------------------------------------
+Current file : $BAK_S3_CURRENT_FILE
+Path         : [$BAK_S3_BUCKET]/$BAK_S3_INSTANCE
+Status       : $status
+
+CONFIG
+}
 
 s3_init() {
    local error=0
@@ -34,7 +51,13 @@ s3_init() {
       date=`date +%F`
       echo "$date" > "/tmp/$BAK_S3_CURRENT_FILE"
       $BAK_S3_PUT_BIN $BAK_S3_CURRENT_FILE "/tmp/$BAK_S3_CURRENT_FILE" > $BAK_NULL_OUTPUT 2>&1
-      BAK_S3_CURRENT_PATH="$date"
+      error=$?
+
+      if [ $error -eq 0 ]; then
+         BAK_S3_CURRENT_PATH="$date"
+      else
+         BAK_S3_ERROR=$error
+      fi
    fi
 
    if [ -n "$BAK_S3_INSTANCE" ]; then
