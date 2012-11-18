@@ -386,6 +386,7 @@ source_backup() {
    # Process this backup
    if [ $error -eq 0 ]; then
       backup_process "$target" "${BAK_DATE}-$name"
+      error=$?
    fi
 
    return $error
@@ -476,6 +477,7 @@ backup_process() {
                $ECHO_BIN -n "[OK]" >> $BAK_OUTPUT
             else
                $ECHO_BIN -n "[ERROR = $be_error]" >> $BAK_OUTPUT
+               error=1
             fi
          done
          $ECHO_BIN >> $BAK_OUTPUT
@@ -501,6 +503,7 @@ backup_process() {
    else
       $ECHO_BIN "ERROR : Bad parameters in 'backup_process' DIR = '$DIR', NAME = '$NAME'" >> $BAK_OUTPUT
    fi
+   return $error
 }
 
 ##################################################################
