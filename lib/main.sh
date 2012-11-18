@@ -747,7 +747,8 @@ executable_set() {
 
 license_show() {
    cat << LICENSE
-Server-Backup - Copyright (C) 2012 Antonio Espinosa <aespinosa@teachnova.com> - TeachNova
+Server-Backup v$BAK_VERSION
+Copyright (C) 2012 Antonio Espinosa <aespinosa@teachnova.com> - TeachNova
 This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it GPLv3 license conditions. Read LICENSE.md for more details.
 
 LICENSE
@@ -755,18 +756,13 @@ LICENSE
 
 version_show() {
    license_show
-   cat << VERSION
-Server-Backup v$BAK_VERSION
-
-VERSION
 }
 
 
 help_show() {
    license_show
    cat << HELP
-Backup system for Dedicated Servers or EC2 into different backends :
-S3, LOCAL, FTP, SFTP, USBHD, WEBDAV.
+Backup system for Dedicated Servers or EC2 into different backends : S3, LOCAL, FTP, SFTP, USBHD, WEBDAV.
 Also support backup encryption using any algorithm supported by OpenSSL library.
 
 Usage : $0 [options]

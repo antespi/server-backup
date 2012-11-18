@@ -163,6 +163,7 @@ $CHOWN_BIN root:root "$BAK_CONFIG_PATH/enc.key"
 environment_check
 
 if [ $BAK_ENABLED -eq 0 ]; then
+   config_show
    $ECHO_BIN "INFO : Backup is disabled by config. Please modify configuration in order to perform a backup"
    $ECHO_BIN "INFO : Read README.md file to further information about Configuration"
    exit 1
