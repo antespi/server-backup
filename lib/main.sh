@@ -508,24 +508,26 @@ backup_process() {
 #  Read sources configuration
 ##################################################################
 source_config_read(){
-    local i=0
-    local line=
+   local i=0
+   local line=
 
-    $ECHO_BIN -n "Reading configuration..." >> $BAK_OUTPUT
-    if [ -e "$1" ]; then
-       while read line; do
-          [[ ${line:0:1} == "#" ]] && continue
-          [[ -z "$line" ]] && continue
-          BAK_SOURCES_CONFIG_SOURCE[$i]=`$ECHO_BIN $line | $CUT_BIN -d',' -f1`
-          BAK_SOURCES_CONFIG_DEPTH[$i]=`$ECHO_BIN $line | $CUT_BIN -d',' -f2`
-          BAK_SOURCES_CONFIG_INC[$i]=`$ECHO_BIN $line | $CUT_BIN -d',' -f3`
-          i=$(($i + 1))
-       done < "$1"
-       $ECHO_BIN " $i items" >> $BAK_OUTPUT
-       return 0
-    fi
-    $ECHO_BIN " ERR: File not found" >> $BAK_OUTPUT
-    return 1
+   if [ ! -f "$BAK_OUTPUT" ]; then BAK_OUTPUT=$BAK_NULL_OUTPUT; fi
+
+   $ECHO_BIN -n "Reading configuration..." >> $BAK_OUTPUT
+   if [ -e "$1" ]; then
+      while read line; do
+         [[ ${line:0:1} == "#" ]] && continue
+         [[ -z "$line" ]] && continue
+         BAK_SOURCES_CONFIG_SOURCE[$i]=`$ECHO_BIN $line | $CUT_BIN -d',' -f1`
+         BAK_SOURCES_CONFIG_DEPTH[$i]=`$ECHO_BIN $line | $CUT_BIN -d',' -f2`
+         BAK_SOURCES_CONFIG_INC[$i]=`$ECHO_BIN $line | $CUT_BIN -d',' -f3`
+         i=$(($i + 1))
+      done < "$1"
+      $ECHO_BIN " $i items" >> $BAK_OUTPUT
+      return 0
+   fi
+   $ECHO_BIN " ERR: File not found" >> $BAK_OUTPUT
+   return 1
 }
 
 ##################################################################
@@ -745,11 +747,8 @@ executable_set() {
 
 license_show() {
    cat << LICENSE
-Server-Backup  Copyright (C) 2012
-Antonio Espinosa <aespinosa@teachnova.com> - TeachNova
-This program comes with ABSOLUTELY NO WARRANTY.
-This is free software, and you are welcome to redistribute it
-GPLv3 license conditions. Read LICENSE.md for more details.
+Server-Backup - Copyright (C) 2012 Antonio Espinosa <aespinosa@teachnova.com> - TeachNova
+This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it GPLv3 license conditions. Read LICENSE.md for more details.
 
 LICENSE
 }
@@ -801,29 +800,31 @@ config_show() {
          continue
       fi
       if [ $BAK_DATABASE_ALLOW_ALL -eq 1 ] || $(contains "${BAK_DATABASE_ALLOW[@]}" "$i"); then
-#         if [ -z "$databases" ]; then databases="$i";
-#         else databases="$databases, $i"; fi
-         databases="${databases}\n${i}"
+         if [ -z "$databases" ]; then databases="$i";
+         else databases=`$ECHO_BIN -e "${databases}\n${i}"`; fi
       fi
    done
 
    for index in `seq 0 1 $((${#BAK_CONFIG_SERVER_SOURCES[@]} - 1))`; do
-      server="${server}\n${BAK_CONFIG_SERVER_SOURCES[$index]}"
+      if [ -z "$server" ]; then server="${BAK_CONFIG_SERVER_SOURCES[$index]}";
+      else server=`$ECHO_BIN -e "${server}\n${BAK_CONFIG_SERVER_SOURCES[$index]}"`; fi
    done
 
    if ! source_config_read "$BAK_SOURCES_CONFIG_FILE"; then
       data="ERROR: Reading configuration (config file = $BAK_SOURCES_CONFIG_FILE)"
    else
       for index in `seq 0 1 $((${#BAK_SOURCES_CONFIG_SOURCE[@]} - 1))`; do
-         data="${data}\n${BAK_SOURCES_CONFIG_SOURCE[$index]}"
-      fi
+         if [ -z "$data" ]; then data="${BAK_SOURCES_CONFIG_SOURCE[$index]}";
+         else data=`$ECHO_BIN -e "${data}\n${BAK_SOURCES_CONFIG_SOURCE[$index]}"`; fi
+      done
    fi
 
    # Extra configuration, backends
    for backend in $BAK_BACKENDS; do
       bef="${backend}_config_show"
       config=`$bef`
-      extra="${extra}\n${config}"
+      if [ -z "$extra" ]; then extra="${config}";
+      else extra=`$ECHO_BIN -e "${extra}\n\n${config}"`; fi
    done
 
 
@@ -859,5 +860,6 @@ Data:
 $data
 
 $extra
+
 CONFIG
 }

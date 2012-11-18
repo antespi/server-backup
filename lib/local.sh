@@ -29,10 +29,12 @@ CONFIG
 
 local_init() {
    # Do nothig
+   return 0
 }
 
 local_put() {
    # Do nothig
+   return 0
 }
 
 local_init
