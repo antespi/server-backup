@@ -143,7 +143,7 @@ if [ -n "$1" ]; then
       *)
          $ECHO_BIN "ERROR : Option not supported" 2>&1
          $ECHO_BIN 2>&1
-         help_show()
+         help_show
          exit 1
          ;;
    esac
