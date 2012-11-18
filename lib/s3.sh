@@ -17,6 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Server-Backup.  If not, see <http://www.gnu.org/licenses/>.
 
+BAK_S3_GET_BIN="/usr/bin/php $BAK_LIB_PATH/s3/aws-object_get.php $BAK_S3_BUCKET"
+BAK_S3_PUT_BIN="/usr/bin/php $BAK_LIB_PATH/s3/aws-object_put.php $BAK_S3_BUCKET"
+BAK_S3_EXISTS_BIN="/usr/bin/php $BAK_LIB_PATH/s3/aws-object_exists.php $BAK_S3_BUCKET"
+BAK_S3_CONFIG_FILE="$BAK_LIB_PATH/s3/aws-php/config.inc.php"
+BAK_S3_CONFIG_DIST_FILE="$BAK_LIB_PATH/s3/aws-php/config-dist.inc.php"
+
 BAK_S3_CURRENT_PATH=
 BAK_S3_ERROR=0
 
