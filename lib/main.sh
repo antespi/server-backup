@@ -17,7 +17,119 @@
 # along with Server-Backup.  If not, see <http://www.gnu.org/licenses/>.
 
 ##################################################################
-# BACKUP Library function
+# BACKUP Constants
+
+BAK_TEMP_DIR=tmp
+BAK_OUTPUT_DIR=out
+BAK_HISTORICAL_DIR=historical
+
+BAK_TEMP_PATH=$BAK_DATA_PATH/$BAK_TEMP_DIR
+BAK_OUTPUT_PATH=$BAK_DATA_PATH/$BAK_OUTPUT_DIR
+BAK_HISTORICAL_PATH=$BAK_DATA_PATH/$BAK_HISTORICAL_DIR
+
+##################################################################
+# BACKUP Output
+
+BAK_OUTPUT=$BAK_PATH/$BAK_LOG_DIR/bak_log_$BAK_DATE.txt
+BAK_OUTPUT_EXTENDED=$BAK_PATH/$BAK_LOG_DIR/bak_log_${BAK_DATE}_ext.txt
+# BAK_OUTPUT=/dev/stdout
+BAK_NULL_OUTPUT=/dev/null
+
+##################################################################
+# BACKUP Data sources
+
+BAK_SOURCES_CONFIG_FILE=$BAK_PATH/$BAK_CONFIG_DIR/sources.conf
+
+##################################################################
+# BACKUP Backends
+
+BAK_BACKENDS="$BAK_REMOTE_BACKENDS $BAK_LOCAL_BACKENDS"
+
+##################################################################
+# BACKUP external commands
+
+TAR_FILE=/bin/tar
+TAR_BIN="$TAR_FILE"
+TAR_OPTS="-cvjf"
+COMPRESS_BIN="$TAR_FILE -czf"
+
+RM_FILE=/bin/rm
+RM_BIN="$RM_FILE -rf"
+
+MV_FILE=/bin/mv
+MV_BIN="$MV_FILE"
+
+CP_FILE=/bin/cp
+CP_BIN="$CP_FILE -a"
+
+SR_FILE="$BAK_LIB_PATH/sr.sh"
+SR_BIN="$SR_FILE -y"
+
+MKDIR_FILE=/bin/mkdir
+MKDIR_BIN="$MKDIR_FILE -p"
+
+CAT_FILE=/bin/cat
+CAT_BIN="$CAT_FILE"
+
+FIND_FILE=/usr/bin/find
+FIND_BIN="$FIND_FILE"
+
+GREP_FILE=/bin/grep
+GREP_BIN="$GREP_FILE"
+
+DF_FILE=/bin/df
+DF_BIN="$DF_FILE -h"
+
+LS_FILE=/bin/ls
+FILE_SIZE_BIN="$LS_FILE -s -h"
+
+DU_FILE=/usr/bin/du
+DIR_SIZE_BIN="$DU_FILE -s -h"
+
+SENDMAIL_FILE=/usr/sbin/sendmail
+SENDMAIL_BIN="$SENDMAIL_FILE"
+
+OPENSSL_FILE=/usr/bin/openssl
+OPENSSL_ENC_BIN="$OPENSSL_FILE enc $BAK_ENCRYPT_ALG -salt -pass file:$BAK_ENCRYPT_KEY_FILE"
+
+ECHO_FILE=/bin/echo
+ECHO_BIN="$ECHO_FILE"
+
+CUT_FILE=/usr/bin/cut
+CUT_BIN="$CUT_FILE"
+
+DATE_FILE=/bin/date
+DATE_BIN="$DATE_FILE"
+
+CHMOD_FILE=/bin/chmod
+CHMOD_BIN="$CHMOD_FILE"
+
+CHOWN_FILE=/bin/chown
+CHOWN_BIN="$CHOWN_FILE"
+
+BAK_ENVIRONMENT_LIST=(
+   "$TAR_FILE"
+   "$RM_FILE"
+   "$MV_FILE"
+   "$CP_FILE"
+   "$SR_FILE"
+   "$MKDIR_FILE"
+   "$CAT_FILE"
+   "$FIND_FILE"
+   "$GREP_FILE"
+   "$DF_FILE"
+   "$LS_FILE"
+   "$DU_FILE"
+   "$SENDMAIL_FILE"
+   "$OPENSSL_FILE"
+   "$ECHO_FILE"
+   "$CUT_FILE"
+   "$CHMOD_FILE"
+   "$CHOWN_FILE"
+)
+
+##################################################################
+# BACKUP Library functions
 
 
 ##################################################################

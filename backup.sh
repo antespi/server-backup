@@ -85,6 +85,15 @@ else
    exit 1
 fi
 
+# Load main library
+BAK_LIB_MAIN_FILE="$BAK_LIB_PATH/main.sh"
+if [ -f "$BAK_LIB_MAIN_FILE" ]; then
+   . "$BAK_LIB_MAIN_FILE"
+else
+   echo "ERROR : No main lib file found '$BAK_LIB_MAIN_FILE'"
+   exit 1
+fi
+
 # Load backends configuration files
 for backend in $BAK_BACKENDS; do
    backend_file="$BAK_CONFIG_PATH/$backend.conf"
@@ -109,14 +118,6 @@ backup_error=0
 
 ### Auxiliar functions #############################################
 
-BAK_LIB_MAIN_FILE="$BAK_LIB_PATH/main.sh"
-
-if [ -f "$BAK_LIB_MAIN_FILE" ]; then
-   . "$BAK_LIB_MAIN_FILE"
-else
-   echo "ERROR : No main lib file found '$BAK_LIB_MAIN_FILE'"
-   exit 1
-fi
 
 ### MAIN #############################################
 
