@@ -14,7 +14,7 @@ Installation
 2.    Go to root home : cd /root
 3.    Clone this repo : git clone https://github.com/antespi/server-backup.git
 4.    Go to Server-Backup dir : cd server-backup
-5.    Execute it for first setup : ./backup.sh
+5.    Execute it for first setup : ./backup.sh --config
 6.    Edit configuration files (see Configuration section below)
 7.    If AWS S3 backend enabled (enabled by default), you will need to get
 an AWS account, AWS credentials (accessKey and secretKey) and create
