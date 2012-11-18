@@ -838,6 +838,7 @@ Encryption     : $BAK_ENCRYPT
 
 Email on Error : $BAK_SEND_MAIL_ERR
 Email on OK    : $BAK_SEND_MAIL_LOG
+Email From     : $BAK_MAIL_FROM_USER
 Email To       : $BAK_MAIL_TO
 Email Cc       : $BAK_MAIL_CC
 
