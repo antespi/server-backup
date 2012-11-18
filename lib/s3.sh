@@ -49,6 +49,8 @@ s3_init() {
    if [ ! -f "$BAK_S3_CONFIG_FILE" ]; then
       $CP_BIN "$BAK_S3_CONFIG_DIST_FILE" "$BAK_S3_CONFIG_FILE"
    fi
+   $CHMOD_BIN 640 "$BAK_S3_CONFIG_FILE"
+   $CHOWN_BIN root:root "$BAK_S3_CONFIG_FILE"
 
    $BAK_S3_GET_BIN $BAK_S3_CURRENT_FILE "/tmp/$BAK_S3_CURRENT_FILE" > $BAK_NULL_OUTPUT 2>&1
    error=$?
