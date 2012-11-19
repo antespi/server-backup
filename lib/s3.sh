@@ -27,10 +27,11 @@ BAK_S3_CURRENT_PATH=
 BAK_S3_ERROR=0
 
 s3_config_show() {
+   local error=0
    local status=
 
    if [ $BAK_S3_ERROR -eq 0 ]; then status="OK";
-   else status="ERROR ($BAK_S3_ERROR)"; fi
+   else status="ERROR ($BAK_S3_ERROR)"; error=1; fi
 
    cat << CONFIG
 S3 Configuration
@@ -40,6 +41,8 @@ Path         : [$BAK_S3_BUCKET]/$BAK_S3_INSTANCE
 Status       : $status
 
 CONFIG
+
+   return $error
 }
 
 s3_init() {
