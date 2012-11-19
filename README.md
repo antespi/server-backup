@@ -63,9 +63,14 @@ Configuration
     1.  Server data directories to backup : path,depth,inc
         - path  : Data directory to backup
         - depth : if 0, make backup of 'path' directory
-                  if 1, make a separate backup os each subfolder in 'path' directory
-                  if 2, make a separate backup os each subfolder/subfolder in 'path' directory
+                  if 1, make a separate backup of each subfolder in 'path' directory
+                  if 2, make a separate backup of each subfolder/subfolder in 'path' directory
                   and so on
+                  WARNING : With depth > 0, files and folders in parents directory will
+                            not included in backup. For example: '/var/www,1,0'
+                            will backup '/var/www/website1' and '/var/www/website2'
+                            directories separately but not '/var/www/index.html' file
+                            Run ./backup.sh -c to see what directories will backup
         - inc   : if 0, make full backup every time
                   if 1, make incremental backups
 
