@@ -284,6 +284,7 @@ sources_backup_loop() {
    $ECHO_BIN "Backup Data" >> $BAK_OUTPUT
    for index in `seq 0 1 $((${#BAK_SOURCES_CONFIG_SOURCE[@]} - 1))`; do
       source="${BAK_SOURCES_CONFIG_SOURCE[$index]}"
+      if echo "$source" | grep -q "\$"; then eval source="$source"; fi
       depth=${BAK_SOURCES_CONFIG_DEPTH[$index]}
       inc=${BAK_SOURCES_CONFIG_INC[$index]}
       target="$BAK_TEMP_PATH"
@@ -810,8 +811,10 @@ config_show() {
    done
 
    for index in `seq 0 1 $((${#BAK_CONFIG_SERVER_SOURCES[@]} - 1))`; do
-      if [ -z "$server" ]; then server="${BAK_CONFIG_SERVER_SOURCES[$index]}";
-      else server=`$ECHO_BIN -e "${server}\n${BAK_CONFIG_SERVER_SOURCES[$index]}"`; fi
+      path="${BAK_CONFIG_SERVER_SOURCES[$index]}"
+      if [ -d "$path" ]; then status="OK"; else status="NOT FOUND"; fi
+      if [ -z "$server" ]; then server="$path - $status";
+      else server=`$ECHO_BIN -e "${server}\n$path - $status"`; fi
    done
 
    if ! source_config_read "$BAK_SOURCES_CONFIG_FILE"; then
@@ -819,10 +822,12 @@ config_show() {
    else
       for index in `seq 0 1 $((${#BAK_SOURCES_CONFIG_SOURCE[@]} - 1))`; do
          path="${BAK_SOURCES_CONFIG_SOURCE[$index]}"
+         if echo "$path" | grep -q "\$"; then eval path="$path"; fi
          depth=${BAK_SOURCES_CONFIG_DEPTH[$index]}
          inc=${BAK_SOURCES_CONFIG_INC[$index]}
-         if [ -z "$data" ]; then data="$path (depth = $depth, inc = $inc)";
-         else data=`$ECHO_BIN -e "${data}\n$path (depth = $depth, inc = $inc)"`; fi
+         if [ -d "$path" ]; then status="OK"; else status="NOT FOUND"; fi
+         if [ -z "$data" ]; then data="$path (depth = $depth, inc = $inc) - $status";
+         else data=`$ECHO_BIN -e "${data}\n$path (depth = $depth, inc = $inc) - $status"`; fi
          if [ $depth -gt 0 ]; then
             while IFS= read -r dir; do
                data=`$ECHO_BIN -e "${data}\n   $dir"`
