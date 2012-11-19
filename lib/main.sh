@@ -297,8 +297,7 @@ sources_backup_loop() {
 
       # Check depth
       if [ $depth -gt 0 ]; then
-         dirs=`$FIND_BIN "$source" -maxdepth $depth -mindepth $depth -type d -not -name ".*"`
-         for dir in "$dirs"; do
+         while IFS= read -r dir; do
             source_backup "$dir" "$target" $inc
             item_error=$?
             if [ $item_error -ne 0 ]; then
@@ -306,7 +305,7 @@ sources_backup_loop() {
                error=1;
                break;
             fi
-         done
+         done < <($FIND_BIN "$source" -maxdepth $depth -mindepth $depth -type d -not -name ".*")
       else
          source_backup "$source" "$target" $inc
          item_error=$?
@@ -825,10 +824,9 @@ config_show() {
          if [ -z "$data" ]; then data="$path (depth = $depth, inc = $inc)";
          else data=`$ECHO_BIN -e "${data}\n$path (depth = $depth, inc = $inc)"`; fi
          if [ $depth -gt 0 ]; then
-            dirs=`$FIND_BIN "$path" -maxdepth $depth -mindepth $depth -type d -not -name ".*"`
-            for dir in "$dirs"; do
+            while IFS= read -r dir; do
                data=`$ECHO_BIN -e "${data}\n   $dir"`
-            done
+            done < <($FIND_BIN "$path" -maxdepth $depth -mindepth $depth -type d -not -name ".*")
          fi
       done
    fi
