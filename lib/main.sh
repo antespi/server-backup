@@ -347,7 +347,7 @@ source_backup() {
 
       $ECHO_BIN -n "      '$target' <- '$dir'" >> $BAK_OUTPUT
       size=`dir_size $dir`
-      $ECHO_BIN " ($size) ... " >> $BAK_OUTPUT
+      $ECHO_BIN -n " ($size) ... " >> $BAK_OUTPUT
 
       if [ $inc -eq 1 ]; then
          extra="-g $local_incfile"
@@ -360,12 +360,14 @@ source_backup() {
       fi
       source_error=$?
 
-      if [ $source_error -eq 0 ] && [ $inc -eq 1 ]; then
-         # Copy inc file to target
-         if [ $BAK_DEBUG -eq 1 ]; then
-            source_error=0
-         else
-            $CP_BIN "$local_incfile" "$remote_incfile"
+      if [ $inc -eq 1 ]; then
+         if [ $source_error -eq 0 ] && [ $source_error -eq 1 ]; then
+            # Copy inc file to target
+            if [ $BAK_DEBUG -eq 1 ]; then
+               source_error=0
+            else
+               $CP_BIN "$local_incfile" "$remote_incfile"
+            fi
          fi
       fi
 
@@ -373,9 +375,13 @@ source_backup() {
          $ECHO_BIN -n "OK" >> $BAK_OUTPUT
          size=`file_size $tarfile`
          $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+      elif [ $source_error -eq 1 ]; then
+         $ECHO_BIN -n "WARNING" >> $BAK_OUTPUT
+         size=`file_size $tarfile`
+         $ECHO_BIN " ($size, some files were changed while being archived)" >> $BAK_OUTPUT
       else
          $ECHO_BIN "FAIL (error = $source_error)" >> $BAK_OUTPUT
-         error=1
+         error=$source_error
       fi
 
    else
