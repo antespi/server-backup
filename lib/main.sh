@@ -788,6 +788,8 @@ HELP
 }
 
 config_show() {
+   local error=0
+   local be_error=0
    local i=
    local databases=
    local extra=
@@ -796,8 +798,27 @@ config_show() {
    local index=0
    local server=
    local data=
+   local encstatus=
+   local status=
 
    license_show
+
+   if [ $BAK_ENCRYPT -eq 1 ]; then
+      if [ -f "$BAK_ENCRYPT_KEY_FILE" ]; then
+         enckey=`cat $BAK_ENCRYPT_KEY_FILE`
+         if [ ${#enckey} -lt 32 ]; then
+            encstatus="ERROR : Key file is too short, please set at least a 32 character key"
+            error=1
+         else
+            encstatus="OK"
+         fi
+      else
+         encstatus="ERROR : Key file '$BAK_ENCRYPT_KEY_FILE' not found"
+         error=1
+      fi
+   else
+      encstatus="OK"
+   fi
 
    for i in $(eval $BAK_MYSQL_DATABASE_LIST_CMD);
    do
@@ -812,7 +833,7 @@ config_show() {
 
    for index in `seq 0 1 $((${#BAK_CONFIG_SERVER_SOURCES[@]} - 1))`; do
       path="${BAK_CONFIG_SERVER_SOURCES[$index]}"
-      if [ -d "$path" ]; then status="OK"; else status="NOT FOUND"; fi
+      if [ -d "$path" ]; then status="OK"; else status="NOT FOUND"; error=1; fi
       if [ -z "$server" ]; then server="$path - $status";
       else server=`$ECHO_BIN -e "${server}\n$path - $status"`; fi
    done
@@ -825,7 +846,7 @@ config_show() {
          if echo "$path" | grep -q "\$"; then eval path="$path"; fi
          depth=${BAK_SOURCES_CONFIG_DEPTH[$index]}
          inc=${BAK_SOURCES_CONFIG_INC[$index]}
-         if [ -d "$path" ]; then status="OK"; else status="NOT FOUND"; fi
+         if [ -d "$path" ]; then status="OK"; else status="NOT FOUND"; error=1; fi
          if [ -z "$data" ]; then data="$path (depth = $depth, inc = $inc) - $status";
          else data=`$ECHO_BIN -e "${data}\n$path (depth = $depth, inc = $inc) - $status"`; fi
          if [ $depth -gt 0 ]; then
@@ -840,10 +861,17 @@ config_show() {
    for backend in $BAK_BACKENDS; do
       bef="${backend}_config_show"
       config=`$bef`
+      be_error=$?
+      if [ $be_error -ne 0 ]; then error=1; fi
       if [ -z "$extra" ]; then extra="${config}";
       else extra=`$ECHO_BIN -e "${extra}\n\n${config}"`; fi
    done
 
+   if [ $error -eq 0 ]; then
+      status="OK : Server-Backup is successful configurated"
+   else
+      status="WARNING : Some errors detected, please review your configuration"
+   fi
 
    cat << CONFIG
 Paths:
@@ -855,7 +883,7 @@ General config: (1 = enabled, 0 = disabled)
 -------------------------------------------------
 Enabled        : $BAK_ENABLED
 Debug          : $BAK_DEBUG
-Encryption     : $BAK_ENCRYPT
+Encryption     : $BAK_ENCRYPT - $encstatus
 
 Email on Error : $BAK_SEND_MAIL_ERR
 Email on OK    : $BAK_SEND_MAIL_LOG
@@ -878,6 +906,8 @@ Data:
 $data
 
 $extra
+
+--> STATUS : $status
 
 CONFIG
 }
