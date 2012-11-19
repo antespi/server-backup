@@ -819,8 +819,17 @@ config_show() {
       data="ERROR: Reading configuration (config file = $BAK_SOURCES_CONFIG_FILE)"
    else
       for index in `seq 0 1 $((${#BAK_SOURCES_CONFIG_SOURCE[@]} - 1))`; do
-         if [ -z "$data" ]; then data="${BAK_SOURCES_CONFIG_SOURCE[$index]}";
-         else data=`$ECHO_BIN -e "${data}\n${BAK_SOURCES_CONFIG_SOURCE[$index]}"`; fi
+         path="${BAK_SOURCES_CONFIG_SOURCE[$index]}"
+         depth=${BAK_SOURCES_CONFIG_DEPTH[$index]}
+         inc=${BAK_SOURCES_CONFIG_INC[$index]}
+         if [ -z "$data" ]; then data="$path (depth = $depth, inc = $inc)";
+         else data=`$ECHO_BIN -e "${data}\n$path (depth = $depth, inc = $inc)"`; fi
+         if [ $depth -gt 0 ]; then
+            find "$path" -maxdepth $depth -mindepth $depth -type d -not -name ".*" | while read dir
+            do
+               data=`$ECHO_BIN -e "${data}\n   $dir"`
+            done
+         fi
       done
    fi
 
