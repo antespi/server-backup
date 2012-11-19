@@ -29,14 +29,28 @@ BAK_S3_ERROR=0
 s3_config_show() {
    local error=0
    local status=
+   local aws_status=
 
    if [ $BAK_S3_ERROR -eq 0 ]; then status="OK";
-   else status="ERROR ($BAK_S3_ERROR)"; error=1; fi
+   else status="ERROR ($BAK_S3_ERROR)"; error=$BAK_S3_ERROR; fi
+
+   if [ -f "$BAK_S3_CONFIG_FILE" ]; then
+      if grep -q "your-key-here" "$BAK_S3_CONFIG_FILE"; then
+         aws_status="ERROR : Invalid configuration, please set your credentials"
+         error=1
+      else
+         aws_status="OK"
+      fi
+   else
+      aws_status="ERROR : File not found"
+      error=1
+   fi
 
    cat << CONFIG
 S3 Configuration
 ------------------------------------------------
 Current file : $BAK_S3_CURRENT_FILE
+AWS config   : $BAK_S3_CONFIG_FILE - $aws_status
 Path         : [$BAK_S3_BUCKET]/$BAK_S3_INSTANCE
 Status       : $status
 
