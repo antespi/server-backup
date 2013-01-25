@@ -45,6 +45,15 @@ BAK_SOURCES_CONFIG_FILE=$BAK_PATH/$BAK_CONFIG_DIR/sources.conf
 ##################################################################
 # BACKUP Email
 
+if [ -z "$BAK_MAIL_FROM_USER" ]; then
+   user=`whoami`
+   domain=`cat /etc/mailname`
+   BAK_MAIL_FROM_USER="${user}@${domain}"
+fi
+if [ -z "$BAK_MAIL_COSTUMER" ]; then
+   BAK_MAIL_COSTUMER=`hostname`
+fi
+
 BAK_MAIL_FROM="$BAK_MAIL_COSTUMER - Server-Backup <$BAK_MAIL_FROM_USER>"
 BAK_MAIL_SUBJECT_ERR="[BACKUP] ERROR - $BAK_MAIL_COSTUMER"
 BAK_MAIL_SUBJECT_LOG="[BACKUP] LOG   - $BAK_MAIL_COSTUMER"
@@ -559,7 +568,7 @@ mail_send() {
    $ECHO_BIN "Content-Transfer-Encoding: 8bit" >> $BAK_MAIL_TEMP_FILE
    $ECHO_BIN >> $BAK_MAIL_TEMP_FILE
    $CAT_BIN $BAK_OUTPUT >> $BAK_MAIL_TEMP_FILE
-   if [ $1 -eq 1 ]; then
+   if [ $1 -eq 1 ] && [ -n "$BAK_MAIL_TO" ]; then
       $CAT_BIN $BAK_MAIL_TEMP_FILE | $SENDMAIL_BIN -f $BAK_MAIL_FROM_USER -t $BAK_MAIL_TO
    fi
 }
