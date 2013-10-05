@@ -17,12 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Server-Backup.  If not, see <http://www.gnu.org/licenses/>.
 
-# BAK_S3_GET_BIN="/usr/bin/php $BAK_LIB_PATH/s3/aws-object_get.php $BAK_S3_BUCKET"
-# BAK_S3_PUT_BIN="/usr/bin/php $BAK_LIB_PATH/s3/aws-object_put.php $BAK_S3_BUCKET"
-# BAK_S3_EXISTS_BIN="/usr/bin/php $BAK_LIB_PATH/s3/aws-object_exists.php $BAK_S3_BUCKET"
-# BAK_S3_CONFIG_FILE="$BAK_LIB_PATH/s3/aws-php/config.inc.php"
-# BAK_S3_CONFIG_DIST_FILE="$BAK_LIB_PATH/s3/aws-php/config-dist.inc.php"
-
 BAK_S3_CMD_BIN='/usr/bin/s3cmd'
 BAK_S3_CONFIG_FILE="$BAK_CONFIG_PATH/.s3cfg"
 BAK_S3_GET_BIN="/usr/bin/s3cmd -c $BAK_S3_CONFIG_FILE get"
@@ -38,7 +32,7 @@ BAK_S3_ERROR=0
 s3_check() {
    if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi 
 
-   if $BAK_S3_AUTOCHECK_BIN $BAK_S3_BASE 2>&1 | grep -q "ERROR"; then
+   if $BAK_S3_AUTOCHECK_BIN "$BAK_S3_BASE/" 2>&1 | grep -q "ERROR"; then
       return 1
    fi
    return $?
