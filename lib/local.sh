@@ -27,7 +27,22 @@ Status       : OK
 CONFIG
 }
 
+local_snapshot() {
+   # Do nothig
+   return 0
+}
+
+local_environment_check() {
+   # Do nothig
+   return 0
+}
+
 local_init() {
+   # Do nothig
+   return 0
+}
+
+local_get() {
    # Do nothig
    return 0
 }

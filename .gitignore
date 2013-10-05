@@ -8,3 +8,8 @@
 /config/
 /sample/
 /lib/s3/aws-php/config.inc.php
+/log/
+last_email.eml
+*.sublime-project
+*.sublime-workspace
+.s3.cfg

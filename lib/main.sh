@@ -19,7 +19,7 @@
 ##################################################################
 # BACKUP Constants
 
-BAK_VERSION=0.1-alpha
+BAK_VERSION=0.2-beta
 
 BAK_TEMP_DIR=tmp
 BAK_OUTPUT_DIR=out
@@ -196,7 +196,7 @@ mysql_databases_backup() {
          if [ $BAK_DEBUG -eq 1 ]; then
             $ECHO_BIN -n "$BAK_MYSQL_DATABASE_BACKUP_CMD $i > '$file' ... " >> $BAK_OUTPUT
          else
-            $BAK_MYSQL_DATABASE_BACKUP_CMD $i > "$file"
+            $BAK_MYSQL_DATABASE_BACKUP_CMD $i > "$file" 2>> $BAK_OUTPUT
          fi
          db_error=$?
          if [ $db_error -eq 0 ];then
@@ -522,6 +522,67 @@ backup_process() {
 }
 
 ##################################################################
+# snapshot
+#  Perform a snapshot
+#  It depends on backends
+##################################################################
+snapshot() {
+   local error=0
+   local be_error=0
+
+   if [ $BAK_ENABLED -eq 0 ]; then
+      config_show
+      $ECHO_BIN "INFO : Backup is disabled by config. Please modify configuration in order to perform a snapshot"
+      $ECHO_BIN "INFO : Read README.md file to further information about Configuration"
+      return 1
+   fi
+
+   # Start log
+   log_start_print "SNAPSHOT"
+
+   # Remove historical files
+   $ECHO_BIN "Deleting historical files at '$BAK_HISTORICAL_PATH'" >> $BAK_OUTPUT
+   $RM_BIN "$BAK_HISTORICAL_PATH"/*
+
+   for backend in $BAK_BACKENDS; do
+      bef="${backend}_snapshot"
+      $bef
+      be_error=$?
+      if [ $be_error -ne 0 ]; then error=1; fi
+   done
+
+   # End log
+   log_end_print "SNAPSHOT"
+
+   # Send report email
+   if [ $error -eq 0 ]; then
+      mail_log_send
+   else
+      mail_error_send
+   fi
+
+   return $error
+}
+
+##################################################################
+# restore
+#  Restore a backup file
+##################################################################
+restore() {
+   $ECHO_BIN "ERROR : Not implemented yet"
+   return 1
+}
+
+##################################################################
+# list
+#  List the contents of a backup file
+##################################################################
+list() {
+   $ECHO_BIN "ERROR : Not implemented yet"
+   return 1
+}
+
+##################################################################
 # source_config_read
 #  Read sources configuration
 ##################################################################
@@ -564,7 +625,7 @@ mail_from_to_write() {
 ##################################################################
 mail_send() {
    $ECHO_BIN "MIME-Version: 1.0" >> $BAK_MAIL_TEMP_FILE
-   $ECHO_BIN "Content-Type: text/plain; charset=ISO-8859-1" >> $BAK_MAIL_TEMP_FILE
+   $ECHO_BIN "Content-Type: text/plain; charset=UTF-8" >> $BAK_MAIL_TEMP_FILE
    $ECHO_BIN "Content-Transfer-Encoding: 8bit" >> $BAK_MAIL_TEMP_FILE
    $ECHO_BIN >> $BAK_MAIL_TEMP_FILE
    $CAT_BIN $BAK_OUTPUT >> $BAK_MAIL_TEMP_FILE
@@ -629,7 +690,7 @@ info_get() {
 ##################################################################
 log_start_print() {
    $ECHO_BIN "----------------------------------------------------------------" > $BAK_OUTPUT;
-   $ECHO_BIN -n "BACKUP START - " >> $BAK_OUTPUT;
+   $ECHO_BIN -n "$1 START - " >> $BAK_OUTPUT;
    $ECHO_BIN $BAK_START_DATE >> $BAK_OUTPUT;
    $ECHO_BIN "----------------------------------------------------------------" >> $BAK_OUTPUT;
    $ECHO_BIN >> $BAK_OUTPUT;
@@ -644,7 +705,7 @@ log_end_print() {
    BAK_END_DATE=`$DATE_BIN`
    $ECHO_BIN >> $BAK_OUTPUT;
    $ECHO_BIN "----------------------------------------------------------------" >> $BAK_OUTPUT;
-   $ECHO_BIN -n "BACKUP END   - " >> $BAK_OUTPUT;
+   $ECHO_BIN -n "$1 END   - " >> $BAK_OUTPUT;
    $ECHO_BIN $BAK_END_DATE >> $BAK_OUTPUT;
    $ECHO_BIN "----------------------------------------------------------------" >> $BAK_OUTPUT;
 }
@@ -745,6 +806,8 @@ dir_size() {
 
 environment_check() {
    local index=0
+   local error=0
+   local be_error=0
    local file=
 
    for index in `seq 0 1 $((${#BAK_ENVIRONMENT_LIST[@]} - 1))`; do
@@ -754,6 +817,15 @@ environment_check() {
          exit 1
       fi
    done
+
+   for backend in $BAK_BACKENDS; do
+      bef="${backend}_environment_check"
+      $bef
+      be_error=$?
+      if [ $be_error -ne 0 ]; then error=1; fi
+   done
+
+   if [ $error -ne 0 ]; then exit $error; fi
 }
 
 executable_set() {

@@ -140,6 +140,21 @@ if [ -n "$1" ]; then
          exit 0
          ;;
 
+      -s | --snapshot )
+         snapshot
+         exit $?
+         ;;
+
+      -r | --restore )
+         restore
+         exit $?
+         ;;
+
+      -l | --list )
+         list
+         exit $?
+         ;;
+
       *)
          $ECHO_BIN "ERROR : Option not supported" 2>&1
          $ECHO_BIN 2>&1
@@ -153,7 +168,6 @@ fi
 
 # Setup (if needed)
 executable_set "$BAK_PATH/backup.sh"
-executable_set "$BAK_PATH/snapshot.sh"
 executable_set "$BAK_LIB_PATH/sr.sh"
 
 $CHMOD_BIN 640 "$BAK_CONFIG_PATH/enc.key"
@@ -173,7 +187,7 @@ fi
 directories_create
 
 # Start log
-log_start_print
+log_start_print "BACKUP"
 
 # Mount devices (if any)
    ############################################
@@ -196,31 +210,25 @@ if [ -n "$BAK_LOCAL_PATH" ]; then
 fi
 
 # Backup configuration
-if [ $backup_error -eq 0 ]; then
-   server_configuration_backup
-   backup_error=$?
-fi
+server_configuration_backup
+if [ $backup_error -eq 0 ]; then backup_error=$?; fi
 
 # Backup databases
-if [ $backup_error -eq 0 ]; then
-   mysql_databases_backup
-   backup_error=$?
-fi
+mysql_databases_backup
+if [ $backup_error -eq 0 ]; then backup_error=$?; fi
 
 # Backup sources
-if [ $backup_error -eq 0 ]; then
-   sources_backup_loop
-   backup_error=$?
-fi
+sources_backup_loop
+if [ $backup_error -eq 0 ]; then backup_error=$?; fi
 
 info_get
 
 old_files_rm $BAK_LOG_PATH $BAK_RM_LOG_OLDER_THAN_DAY
 
 # End log
-log_end_print
+log_end_print "BACKUP"
 
-# Copy report to backends
+# TODO : Copy report to backends
 
 # Send report email
 if [ $backup_error -eq 0 ]; then

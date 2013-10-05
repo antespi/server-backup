@@ -7,6 +7,28 @@ Also support backup encryption using any algorithm supported by OpenSSL library.
 
 
 
+Pre-Installation
+================
+
+This software require third-party applications for enable some features:
+
+S3 Backend : Need s3cmd from http://s3tools.org/s3cmd
+1.    sudo apt-get install s3cmd
+2.    Get a AWS account if you don't have one already
+3.    Configure an IAM user for access to S3 buckets and download its credentials (Access Key and Secret Key)
+4.    s3cmd --configure
+      -    Introduce AWS Access Key
+      -    Introduce AWS Secret Key
+      -    Left 'Encryption password' blank
+      -    Let 'Path to GPG program' value by default
+      -    Use HTTPS protocol : Yes
+5. Remember path of .s3cfg generated file for later
+
+FTP Backend : Need ncftp from http://www.ncftp.com/ncftp/
+1.    sudo apt-get install ncftp
+
+
+
 Installation
 ============
 
@@ -19,7 +41,7 @@ Installation
 7.    If AWS S3 backend enabled (enabled by default), you will need to get
 an AWS account, AWS credentials (accessKey and secretKey) and create
 an S3 Bucket. Be sure that user has enoght rights to get and put files
-to that S3 Bucket.
+to that S3 Bucket. You need s3cmd installed and configured.
 8.    Configure a cron file (/etc/cron.d/backup) like this
 
         0  1 * *   *  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
@@ -36,6 +58,7 @@ Configuration
 -   config.conf : Server configuration sources
 
     1.  Server configuration directories to backup
+
 
 -   database.conf : Database configuration
 
@@ -74,14 +97,29 @@ Configuration
         - inc   : if 0, make full backup every time
                   if 1, make incremental backups
 
+
 -   s3.conf : S3 Backend configuration
 
     1.  S3 bucket
-    2.  Remember to set credentials in lib/s3/aws-php/config.inc.php
+    2.  Copy .s3cfg generated after (in pre-installation) to /root/server-backup
+
+        # chmod 640 /root/server-backup/config/.s3cfg
+        # chmod root:root /root/server-backup/config/.s3cfg
+
+-   ftp.conf : FTP Backend configuration
+
+    1. Create .ftpcfg file with host, user and password info
+
+        # nano /root/server-backup/config/.ftpcfg
+            host sphygmomanometer.ncftp.com
+            user gleason
+            pass mypasswd
+
 
 -   local.conf : Local backend configuration
 
     1.  Local path
+
 
 -   ecn.key : Encryption key
 
@@ -93,6 +131,7 @@ Configuration
 
         # chmod 640 config/enc.key
         # chown root:root config/enc.key
+
 
 -   general.conf : General configuration
 
@@ -122,10 +161,6 @@ Maybe you will have to give execution rights to this programs:
     # chmod +x /root/server-backup/lib/sr.sh
     # chmod +x /root/server-backup/backup.sh
     # chmod +x /root/server-backup/snapshot.sh
-
-If you enable AWS S3 backend (enabled by default) then be sure that you have installed php5 and php5-curl, and other AWS SDK for PHP requirements. [More info](http://docs.amazonwebservices.com/AWSSdkDocsPHP/latest/DeveloperGuide/php-dg-setup.html)
-
-    # apt-get install php5 php5-curl
 
 
 
@@ -157,12 +192,30 @@ This is what snapshot.sh script do each time is invoked by you or by a cron job 
 TODO
 ====
 
-This is the first version, there are some tasks to do ;)
+This is the second version, there are some tasks to do yet ;)
 
 -    Snapshot script
 -    More backends: FTP, USBHD, SFTP, WEBDAV
 -    Backup of PostgreSQL databases
 -    Backup of SQlite databases
+
+
+
+CHANGE LOG
+==========
+
+v0.2 : Oct 2013
+
+-    Use of s3cmd as toolkit to connect to S3 Backend
+-    FTP Backend, not fully tested!
+-    Snapshot option
+-    Restore file option
+-    List file option
+
+
+v0.1 : Nov 2012
+
+-    First version
 
 
 
@@ -189,7 +242,7 @@ file. Also you can read GPLv3 from [GNU Licenses](http://www.gnu.org/licenses/).
 AUTHOR
 ======
 
-Copyright (C) 2012<br />
+Copyright (C) 2012,2013<br />
 Antonio Espinosa<br />
 Email    : aespinosa at teachnova dot com<br />
 Twitter  : [@antespi](http://twitter.com/antespi)<br />
