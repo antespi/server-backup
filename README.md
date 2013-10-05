@@ -13,6 +13,7 @@ Pre-Installation
 This software require third-party applications for enable some features:
 
 S3 Backend : Need s3cmd from http://s3tools.org/s3cmd
+
 1.    sudo apt-get install s3cmd
 2.    Get a AWS account if you don't have one already
 3.    Configure an IAM user for access to S3 buckets and download its credentials (Access Key and Secret Key)
@@ -25,6 +26,7 @@ S3 Backend : Need s3cmd from http://s3tools.org/s3cmd
 5. Remember path of .s3cfg generated file for later
 
 FTP Backend : Need ncftp from http://www.ncftp.com/ncftp/
+
 1.    sudo apt-get install ncftp
 
 
