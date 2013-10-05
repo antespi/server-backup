@@ -10,24 +10,24 @@ Also support backup encryption using any algorithm supported by OpenSSL library.
 Pre-Installation
 ================
 
-This software require third-party applications for enable some features:
+This software require third-party applications for enabling some features:
 
-S3 Backend : Need s3cmd from http://s3tools.org/s3cmd
+-   S3 Backend : Need s3cmd from http://s3tools.org/s3cmd
 
-1.    sudo apt-get install s3cmd
-2.    Get a AWS account if you don't have one already
-3.    Configure an IAM user for access to S3 buckets and download its credentials (Access Key and Secret Key)
-4.    s3cmd --configure
-      -    Introduce AWS Access Key
-      -    Introduce AWS Secret Key
-      -    Left 'Encryption password' blank
-      -    Let 'Path to GPG program' value by default
-      -    Use HTTPS protocol : Yes
-5. Remember path of .s3cfg generated file for later
+    1.    sudo apt-get install s3cmd
+    2.    Get a AWS account if you don't have one already
+    3.    Configure an IAM user for access to S3 buckets and download its credentials (Access Key and Secret Key)
+    4.    s3cmd --configure
+        -    Introduce AWS Access Key
+        -    Introduce AWS Secret Key
+        -    Left 'Encryption password' blank
+        -    Let 'Path to GPG program' value by default
+        -    Use HTTPS protocol : Yes
+    5. Remember path of .s3cfg generated file for later
 
-FTP Backend : Need ncftp from http://www.ncftp.com/ncftp/
+-   FTP Backend : Need ncftp from http://www.ncftp.com/ncftp/
 
-1.    sudo apt-get install ncftp
+    1.    sudo apt-get install ncftp
 
 
 
@@ -184,7 +184,7 @@ This is what backup.sh script do each time is invoked by you or by a cron job
 11.  Delete old log files
 12.  Send a email report (if enabled)
 
-This is what snapshot.sh script do each time is invoked by you or by a cron job (TODO)
+This is what 'backup.sh --snapshot' script do each time is invoked by you or by a cron job (TODO)
 
 1.   Remove historical files (for incremental backups) : /backup/historical
 2.   Make snapshot operation for each backend (backend specific process)
@@ -196,10 +196,12 @@ TODO
 
 This is the second version, there are some tasks to do yet ;)
 
--    Snapshot script
--    More backends: FTP, USBHD, SFTP, WEBDAV
+-    More backends: USBHD, SFTP, WEBDAV
+-    Testing of FTP backend
 -    Backup of PostgreSQL databases
 -    Backup of SQlite databases
+-    Restore file option
+-    List file option
 
 
 
@@ -211,8 +213,6 @@ v0.2 : Oct 2013
 -    Use of s3cmd as toolkit to connect to S3 Backend
 -    FTP Backend, not fully tested!
 -    Snapshot option
--    Restore file option
--    List file option
 
 
 v0.1 : Nov 2012
