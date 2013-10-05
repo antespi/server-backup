@@ -183,6 +183,12 @@ mysql_databases_backup() {
 
    $ECHO_BIN >> $BAK_OUTPUT
    $ECHO_BIN "Backup MySQL Databases" >> $BAK_OUTPUT
+
+   if [ $BAK_DATABASE_ENABLED -eq 0 ]; then
+      $ECHO_BIN "   Disabled by configuration" >> $BAK_OUTPUT
+      return 0
+   fi
+
    for i in $(eval $BAK_MYSQL_DATABASE_LIST_CMD);
    do
       if $(contains "${BAK_DATABASE_DISALLOW[@]}" "$i"); then
@@ -536,6 +542,9 @@ snapshot() {
       $ECHO_BIN "INFO : Read README.md file to further information about Configuration"
       return 1
    fi
+
+   # Check directories and create them (if needed)
+   directories_create
 
    # Start log
    log_start_print "SNAPSHOT"
@@ -901,16 +910,20 @@ config_show() {
       encstatus="OK"
    fi
 
-   for i in $(eval $BAK_MYSQL_DATABASE_LIST_CMD);
-   do
-      if $(contains "${BAK_DATABASE_DISALLOW[@]}" "$i"); then
-         continue
-      fi
-      if [ $BAK_DATABASE_ALLOW_ALL -eq 1 ] || $(contains "${BAK_DATABASE_ALLOW[@]}" "$i"); then
-         if [ -z "$databases" ]; then databases="$i";
-         else databases=`$ECHO_BIN -e "${databases}\n${i}"`; fi
-      fi
-   done
+   if [ $BAK_DATABASE_ENABLED -ne 0 ]; then
+      for i in $(eval $BAK_MYSQL_DATABASE_LIST_CMD);
+      do
+         if $(contains "${BAK_DATABASE_DISALLOW[@]}" "$i"); then
+            continue
+         fi
+         if [ $BAK_DATABASE_ALLOW_ALL -eq 1 ] || $(contains "${BAK_DATABASE_ALLOW[@]}" "$i"); then
+            if [ -z "$databases" ]; then databases="$i";
+            else databases=`$ECHO_BIN -e "${databases}\n${i}"`; fi
+         fi
+      done
+   else
+      databases='Disabled by configuration'
+   fi
 
    for index in `seq 0 1 $((${#BAK_CONFIG_SERVER_SOURCES[@]} - 1))`; do
       path="${BAK_CONFIG_SERVER_SOURCES[$index]}"
