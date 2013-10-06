@@ -108,6 +108,14 @@ Configuration
         # chmod 640 /root/server-backup/config/.s3cfg
         # chmod root:root /root/server-backup/config/.s3cfg
 
+    3. We recommend to change chunk sizes to improve upload performance in big files
+
+        # nano /root/server-backup/config/.s3cfg
+            multipart_chunk_size_mb = 1024
+            recv_chunk = 81920
+            send_chunk = 81920
+
+
 -   ftp.conf : FTP Backend configuration
 
     1. Create .ftpcfg file with host, user and password info
