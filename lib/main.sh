@@ -32,8 +32,8 @@ BAK_HISTORICAL_PATH=$BAK_DATA_PATH/$BAK_HISTORICAL_DIR
 ##################################################################
 # BACKUP Output
 
-BAK_OUTPUT=$BAK_PATH/$BAK_LOG_DIR/bak_log_$BAK_DATE.txt
-BAK_OUTPUT_EXTENDED=$BAK_PATH/$BAK_LOG_DIR/bak_log_${BAK_DATE}_ext.txt
+BAK_OUTPUT=$BAK_PATH/$BAK_LOG_DIR/bak_log_${BAK_DATE}_$$.txt
+BAK_OUTPUT_EXTENDED=$BAK_PATH/$BAK_LOG_DIR/bak_log_${BAK_DATE}_$$_ext.txt
 # BAK_OUTPUT=/dev/stdout
 BAK_NULL_OUTPUT=/dev/null
 
@@ -61,7 +61,8 @@ fi
 BAK_MAIL_FROM="$BAK_MAIL_COSTUMER - Server-Backup <$BAK_MAIL_FROM_USER>"
 BAK_MAIL_SUBJECT_ERR="[BACKUP] ERROR - $BAK_MAIL_COSTUMER"
 BAK_MAIL_SUBJECT_LOG="[BACKUP] LOG   - $BAK_MAIL_COSTUMER"
-BAK_MAIL_TEMP_FILE=$BAK_PATH/last_email.eml
+BAK_MAIL_TEMP_FILE=$BAK_TEMP_PATH/$$_last_email.eml
+BAK_MAIL_LAST_FILE=$BAK_PATH/last_email.eml
 
 ##################################################################
 # BACKUP Backends
@@ -654,6 +655,8 @@ mail_send() {
    $CAT_BIN $BAK_OUTPUT >> $BAK_MAIL_TEMP_FILE
    if [ $1 -eq 1 ] && [ -n "$BAK_MAIL_TO" ]; then
       $CAT_BIN $BAK_MAIL_TEMP_FILE | $SENDMAIL_BIN -f $BAK_MAIL_FROM_USER -t $BAK_MAIL_TO
+      $CP_BIN $BAK_MAIL_TEMP_FILE $BAK_MAIL_LAST_FILE
+      $RM_BIN $BAK_MAIL_TEMP_FILE
    fi
 }
 
@@ -713,7 +716,7 @@ info_get() {
 ##################################################################
 log_start_print() {
    $ECHO_BIN "----------------------------------------------------------------" > $BAK_OUTPUT;
-   $ECHO_BIN -n "$1 START - " >> $BAK_OUTPUT;
+   $ECHO_BIN -n "$1 START ($$) - " >> $BAK_OUTPUT;
    $ECHO_BIN $BAK_START_DATE >> $BAK_OUTPUT;
    $ECHO_BIN "----------------------------------------------------------------" >> $BAK_OUTPUT;
    $ECHO_BIN >> $BAK_OUTPUT;
@@ -728,7 +731,7 @@ log_end_print() {
    BAK_END_DATE=`$DATE_BIN`
    $ECHO_BIN >> $BAK_OUTPUT;
    $ECHO_BIN "----------------------------------------------------------------" >> $BAK_OUTPUT;
-   $ECHO_BIN -n "$1 END   - " >> $BAK_OUTPUT;
+   $ECHO_BIN -n "$1 END   ($$) - " >> $BAK_OUTPUT;
    $ECHO_BIN $BAK_END_DATE >> $BAK_OUTPUT;
    $ECHO_BIN "----------------------------------------------------------------" >> $BAK_OUTPUT;
 }
@@ -738,10 +741,10 @@ log_end_print() {
 #  Check if another backup proccess is executing
 ##################################################################
 lock_check_and_set() {
-   if [ -f $BAK_LOCK ];
+   if [ -f $BAK_LOCK ]; then
       pid=`$CAT_BIN "$BAK_LOCK"`
       if $PID_CHECK_BIN $pid; then
-         $ECHO_BIN "ERROR : Another backup process detected on pid = $pid" >> $BACK_OUTPUT
+         $ECHO_BIN "ERROR : Another backup process detected on pid = $pid" >> $BAK_OUTPUT
          return 1
       else
          lock_set
