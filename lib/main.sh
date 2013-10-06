@@ -29,6 +29,8 @@ BAK_TEMP_PATH=$BAK_DATA_PATH/$BAK_TEMP_DIR
 BAK_OUTPUT_PATH=$BAK_DATA_PATH/$BAK_OUTPUT_DIR
 BAK_HISTORICAL_PATH=$BAK_DATA_PATH/$BAK_HISTORICAL_DIR
 
+BAK_BACKEND_MAX_RETRIES=3
+
 ##################################################################
 # BACKUP Output
 
@@ -325,16 +327,15 @@ sources_backup_loop() {
             source_backup "$dir" "$target" $inc
             item_error=$?
             if [ $item_error -ne 0 ]; then
-               $ECHO_BIN "   ERROR: Source '$source' stop with error = $item_error" >> $BAK_OUTPUT
+               $ECHO_BIN "   ERROR: Source '$dir' ends with error = $item_error" >> $BAK_OUTPUT
                error=1;
-               break;
             fi
          done < <($FIND_BIN "$source" -maxdepth $depth -mindepth $depth -type d -not -name ".*")
       else
          source_backup "$source" "$target" $inc
          item_error=$?
          if [ $item_error -ne 0 ]; then
-            $ECHO_BIN "   ERROR: Source '$source' stop with error = $item_error" >> $BAK_OUTPUT
+            $ECHO_BIN "   ERROR: Source '$source' ends with error = $item_error" >> $BAK_OUTPUT
             error=1;
          fi
       fi
@@ -496,18 +497,23 @@ backup_process() {
          for be in $BAK_REMOTE_BACKENDS; do
             $ECHO_BIN -n " $be " >> $BAK_OUTPUT
             bef="${be}_put"
-            if [ $BAK_DEBUG -eq 1 ]; then
-               $ECHO_BIN  -n "$bef '$file_to_upload' " >> $BAK_OUTPUT
-            else
-               $bef "$file_to_upload"
-            fi
-            be_error=$?
-            if [ $be_error -eq 0 ]; then
-               $ECHO_BIN -n "[OK]" >> $BAK_OUTPUT
-            else
-               $ECHO_BIN -n "[ERROR = $be_error]" >> $BAK_OUTPUT
-               error=1
-            fi
+            try=0
+            while [ $try -lt $BAK_BACKEND_MAX_RETRIES ]; do
+               if [ $BAK_DEBUG -eq 1 ]; then
+                  $ECHO_BIN  -n "$bef '$file_to_upload' " >> $BAK_OUTPUT
+               else
+                  $bef "$file_to_upload"
+               fi
+               be_error=$?
+               if [ $be_error -eq 0 ]; then
+                  $ECHO_BIN -n "[OK]" >> $BAK_OUTPUT
+                  break;
+               else
+                  $ECHO_BIN -n "[ERROR = $be_error]" >> $BAK_OUTPUT
+                  try=$((try + 1))
+               fi
+            done
+            if [ $be_error -ne 0 ]; then error=1; fi
          done
          $ECHO_BIN >> $BAK_OUTPUT
 
