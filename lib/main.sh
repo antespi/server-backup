@@ -38,6 +38,10 @@ BAK_OUTPUT_EXTENDED=$BAK_PATH/$BAK_LOG_DIR/bak_log_${BAK_DATE}_ext.txt
 BAK_NULL_OUTPUT=/dev/null
 
 ##################################################################
+# BACKUP Lock
+BAK_LOCK=$BAK_TEMP_PATH/.lock
+
+##################################################################
 # BACKUP Data sources
 
 BAK_SOURCES_CONFIG_FILE=$BAK_PATH/$BAK_CONFIG_DIR/sources.conf
@@ -125,6 +129,9 @@ CHMOD_BIN="$CHMOD_FILE"
 
 CHOWN_FILE=/bin/chown
 CHOWN_BIN="$CHOWN_FILE"
+
+KILL_FILE=/bin/kill
+PID_CHECK_BIN="$KILL_FILE -0"
 
 BAK_ENVIRONMENT_LIST=(
    "$TAR_FILE"
@@ -549,6 +556,13 @@ snapshot() {
    # Start log
    log_start_print "SNAPSHOT"
 
+   # Check lock
+   if ! lock_check_and_set; then
+      log_end_print "BACKUP"
+      mail_error_send
+      return 1
+   fi
+
    # Remove historical files
    $ECHO_BIN "Deleting historical files at '$BAK_HISTORICAL_PATH'" >> $BAK_OUTPUT
    $RM_BIN "$BAK_HISTORICAL_PATH"/*
@@ -718,6 +732,35 @@ log_end_print() {
    $ECHO_BIN $BAK_END_DATE >> $BAK_OUTPUT;
    $ECHO_BIN "----------------------------------------------------------------" >> $BAK_OUTPUT;
 }
+
+##################################################################
+# lock_check
+#  Check if another backup proccess is executing
+##################################################################
+lock_check_and_set() {
+   if [ -f $BAK_LOCK ];
+      pid=`$CAT_BIN "$BAK_LOCK"`
+      if $PID_CHECK_BIN $pid; then
+         $ECHO_BIN "ERROR : Another backup process detected on pid = $pid" >> $BACK_OUTPUT
+         return 1
+      else
+         lock_set
+      fi
+   else
+      lock_set
+   fi
+   return 0
+}
+
+lock_set() {
+   trap "{ lock_release; }" EXIT
+   $ECHO_BIN $$ > "$BAK_LOCK"
+}
+
+lock_release() {
+   $RM_BIN "$BAK_LOCK"
+}
+
 
 ##################################################################
 # directories_create

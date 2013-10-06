@@ -189,6 +189,13 @@ directories_create
 # Start log
 log_start_print "BACKUP"
 
+# Check lock
+if ! lock_check_and_set; then
+   log_end_print "BACKUP"
+   mail_error_send
+   exit 1
+fi
+
 # Mount devices (if any)
    ############################################
    # TODO : Mount devices for usb backend #####
@@ -198,6 +205,7 @@ log_start_print "BACKUP"
 if ! source_config_read "$BAK_SOURCES_CONFIG_FILE"; then
    $ECHO_BIN >> $BAK_OUTPUT
    $ECHO_BIN "ERROR: Reading configuration (config file = $BAK_SOURCES_CONFIG_FILE)" >> $BAK_OUTPUT
+   log_end_print "BACKUP"
    mail_error_send
    exit 1
 fi
