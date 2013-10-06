@@ -46,8 +46,12 @@ an S3 Bucket. Be sure that user has enoght rights to get and put files
 to that S3 Bucket. You need s3cmd installed and configured.
 8.    Configure a cron file (/etc/cron.d/backup) like this
 
-        0  1 * *   *  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
-        0 22 * *   6  root  /root/server-backup/snapshot.sh &> /root/server-backup/last_snapshot.log
+    0   1    * * 1-6  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
+    0  22    * * 5    root  /root/server-backup/backup.sh --snapshot &> /root/server-backup/last_snapshot.log
+
+    Or copy from sample
+
+    # cp -a /root/server-backup/cron-backup-sample /etc/cron.d/backup
 
 9.    If local backend enabled (enabled by default), create an FTP (or SFTP)
 account for fetching backup with read acces to local folder (/backup/local by default)
@@ -170,7 +174,6 @@ Maybe you will have to give execution rights to this programs:
 
     # chmod +x /root/server-backup/lib/sr.sh
     # chmod +x /root/server-backup/backup.sh
-    # chmod +x /root/server-backup/snapshot.sh
 
 
 

@@ -1,0 +1,6 @@
+### BACKUP
+##################################################################
+# Mon-Sat at 01:00
+0   1    * * 1-6  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
+# Fri at 22:00
+0  22    * * 5    root  /root/server-backup/backup.sh --snapshot &> /root/server-backup/last_snapshot.log
