@@ -35,7 +35,7 @@ ftp_check() {
    local user=`cat $BAK_FTP_CONFIG_FILE | grep user | cut -d' ' -f2`
    local pass=`cat $BAK_FTP_CONFIG_FILE | grep pass | cut -d' ' -f2`
 
-   if [ ! $BAK_FTP_ERROR -eq 0 ]; then return $BAK_FTP_ERROR; fi 
+   if [ ! $BAK_FTP_ERROR -eq 0 ]; then return $BAK_FTP_ERROR; fi
 
    $BAK_FTP_CHECK_BIN -x "quit" ftp://$host > $BAK_NULL_OUTPUT 2>&1
    return $?
@@ -97,7 +97,7 @@ ftp_snapshot() {
    local error=0
    local date=`$DATE_BIN +%F`
 
-   if [ ! $BAK_FTP_ERROR -eq 0 ]; then return $BAK_FTP_ERROR; fi 
+   if [ ! $BAK_FTP_ERROR -eq 0 ]; then return $BAK_FTP_ERROR; fi
 
    $ECHO_BIN "$date" > "$cfile"
    $ECHO_BIN "FTP : Setting new current file : '$date'" >> $BAK_OUTPUT
@@ -117,13 +117,13 @@ ftp_snapshot() {
 }
 
 ftp_environment_check() {
-   if [ ! $BAK_FTP_ERROR -eq 0 ]; then 
+   if [ ! $BAK_FTP_ERROR -eq 0 ]; then
       ftp_errmsg $BAK_FTP_ERROR
-      return $BAK_FTP_ERROR; 
-   fi 
-   if [ ! -f "$BAK_FTP_CMD_BIN" ]; then 
+      return $BAK_FTP_ERROR;
+   fi
+   if [ ! -f "$BAK_FTP_CMD_BIN" ]; then
       $ECHO_BIN "ERROR : NcFTP is not installed"
-      return 1; 
+      return 1;
    fi
    return 0
 }
@@ -174,10 +174,11 @@ ftp_get() {
    local localpath=`dirname $file`
    local name=`basename $file`
 
-   if [ ! $BAK_FTP_ERROR -eq 0 ]; then return $BAK_FTP_ERROR; fi 
+   if [ ! $BAK_FTP_ERROR -eq 0 ]; then return $BAK_FTP_ERROR; fi
 
    if [ -f "$file" ]; then
-      $BAK_FTP_GET_BIN "$localpath" "$BAK_FTP_BASE/$BAK_FTP_CURRENT_PATH/$name" > $BAK_NULL_OUTPUT 2>&1
+      $ECHO_BIN "FTP GET : '$localpath' <- '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
+      $BAK_FTP_GET_BIN "$localpath" "$BAK_FTP_BASE/$BAK_FTP_CURRENT_PATH/$name" > $BAK_NULL_OUTPUT 2>> $BAK_OUTPUT_EXTENDED
       error=$?
    else
       error=1
@@ -190,10 +191,11 @@ ftp_put() {
    local file=$1
    local name=`basename $file`
 
-   if [ ! $BAK_FTP_ERROR -eq 0 ]; then return $BAK_FTP_ERROR; fi 
+   if [ ! $BAK_FTP_ERROR -eq 0 ]; then return $BAK_FTP_ERROR; fi
 
    if [ -f "$file" ]; then
-      $BAK_FTP_PUT_BIN "$BAK_FTP_BASE/$BAK_FTP_CURRENT_PATH/" "$file" > $BAK_NULL_OUTPUT 2>&1
+      $ECHO_BIN "FTP PUT : '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/' <- '$file'" >> $BAK_OUTPUT_EXTENDED
+      $BAK_FTP_PUT_BIN "$BAK_FTP_BASE/$BAK_FTP_CURRENT_PATH/" "$file" > $BAK_NULL_OUTPUT 2>> $BAK_OUTPUT_EXTENDED
       error=$?
    else
       error=1

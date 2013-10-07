@@ -30,7 +30,7 @@ BAK_S3_CURRENT_PATH=
 BAK_S3_ERROR=0
 
 s3_check() {
-   if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi 
+   if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi
 
    if $BAK_S3_AUTOCHECK_BIN "$BAK_S3_BASE/" 2>&1 | grep -q "ERROR"; then
       return 1
@@ -84,7 +84,7 @@ s3_snapshot() {
    local error=0
    local date=`$DATE_BIN +%F`
 
-   if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi 
+   if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi
 
    $ECHO_BIN "$date" > "$cfile"
    $ECHO_BIN "S3 : Setting new current file : '$date'" >> $BAK_OUTPUT
@@ -101,13 +101,13 @@ s3_snapshot() {
 }
 
 s3_environment_check() {
-   if [ ! $BAK_S3_ERROR -eq 0 ]; then 
+   if [ ! $BAK_S3_ERROR -eq 0 ]; then
       $ECHO_BIN "ERROR : Invalid S3 configuration, please set your credentials"
-      return $BAK_S3_ERROR; 
-   fi 
-   if [ ! -f "$BAK_S3_CMD_BIN" ]; then 
+      return $BAK_S3_ERROR;
+   fi
+   if [ ! -f "$BAK_S3_CMD_BIN" ]; then
       $ECHO_BIN "ERROR : S3cmd is not installed"
-      return 1; 
+      return 1;
    fi
    return 0
 }
@@ -157,10 +157,11 @@ s3_get() {
    local file=$1
    local name=`basename $file`
 
-   if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi 
+   if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi
 
    if [ -f "$file" ]; then
-      $BAK_S3_GET_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" "$file" > $BAK_NULL_OUTPUT 2>&1
+      $ECHO_BIN "S3 GET : '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name' -> '$file'" >> $BAK_OUTPUT_EXTENDED
+      $BAK_S3_GET_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" "$file" > $BAK_NULL_OUTPUT 2>> $BAK_OUTPUT_EXTENDED
       error=$?
    else
       error=1
@@ -173,10 +174,11 @@ s3_put() {
    local file=$1
    local name=`basename $file`
 
-   if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi 
+   if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi
 
    if [ -f "$file" ]; then
-      $BAK_S3_PUT_BIN "$file" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name"  > $BAK_NULL_OUTPUT 2>&1
+      $ECHO_BIN "S3 PUT : '$file' -> '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
+      $BAK_S3_PUT_BIN "$file" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name"  > $BAK_NULL_OUTPUT 2>> $BAK_OUTPUT_EXTENDED
       error=$?
    else
       error=1
