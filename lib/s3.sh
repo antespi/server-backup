@@ -19,10 +19,10 @@
 
 BAK_S3_CMD_BIN='/usr/bin/s3cmd'
 BAK_S3_CONFIG_FILE="$BAK_CONFIG_PATH/.s3cfg"
-BAK_S3_GET_BIN="/usr/bin/s3cmd -c $BAK_S3_CONFIG_FILE get"
-BAK_S3_PUT_BIN="/usr/bin/s3cmd -c $BAK_S3_CONFIG_FILE put"
-BAK_S3_EXISTS_BIN="/usr/bin/s3cmd -c $BAK_S3_CONFIG_FILE info"
-BAK_S3_AUTOCHECK_BIN="/usr/bin/s3cmd -c $BAK_S3_CONFIG_FILE info"
+BAK_S3_GET_BIN="$BAK_S3_CMD_BIN -c $BAK_S3_CONFIG_FILE --no-progress get"
+BAK_S3_PUT_BIN="$BAK_S3_CMD_BIN -c $BAK_S3_CONFIG_FILE --no-progress put"
+BAK_S3_EXISTS_BIN="$BAK_S3_CMD_BIN -c $BAK_S3_CONFIG_FILE info"
+BAK_S3_AUTOCHECK_BIN="$BAK_S3_CMD_BIN -c $BAK_S3_CONFIG_FILE info"
 
 BAK_S3_BASE="s3://$BAK_S3_BUCKET/$BAK_S3_INSTANCE"
 
@@ -161,7 +161,7 @@ s3_get() {
 
    if [ -f "$file" ]; then
       $ECHO_BIN "S3 GET : '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name' -> '$file'" >> $BAK_OUTPUT_EXTENDED
-      $BAK_S3_GET_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" "$file" > $BAK_NULL_OUTPUT 2>> $BAK_OUTPUT_EXTENDED
+      $BAK_S3_GET_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" "$file" >> $BAK_OUTPUT_EXTENDED 2>&1
       error=$?
    else
       error=1
@@ -178,7 +178,7 @@ s3_put() {
 
    if [ -f "$file" ]; then
       $ECHO_BIN "S3 PUT : '$file' -> '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
-      $BAK_S3_PUT_BIN "$file" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name"  > $BAK_NULL_OUTPUT 2>> $BAK_OUTPUT_EXTENDED
+      $BAK_S3_PUT_BIN "$file" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name"  >> $BAK_OUTPUT_EXTENDED 2>&1
       error=$?
    else
       error=1
