@@ -513,7 +513,7 @@ backup_process() {
                   try=$((try + 1))
                fi
             done
-            if [ $be_error -ne 0 ]; then error=1; fi
+            if [ $be_error -ne 0 ]; then error=$be_error; fi
          done
          $ECHO_BIN >> $BAK_OUTPUT
 

@@ -219,15 +219,21 @@ fi
 
 # Backup configuration
 server_configuration_backup
-if [ $backup_error -eq 0 ]; then backup_error=$?; fi
+berror=$?
+if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making Server Configuration backup (error = $berror)"; fi
+if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
 
 # Backup databases
 mysql_databases_backup
-if [ $backup_error -eq 0 ]; then backup_error=$?; fi
+berror=$?
+if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making Databases backup (error = $berror)"; fi
+if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
 
 # Backup sources
 sources_backup_loop
-if [ $backup_error -eq 0 ]; then backup_error=$?; fi
+berror=$?
+if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making Sources backup (error = $berror)"; fi
+if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
 
 info_get
 
