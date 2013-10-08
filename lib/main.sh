@@ -136,6 +136,12 @@ CHOWN_BIN="$CHOWN_FILE"
 KILL_FILE=/bin/kill
 PID_CHECK_BIN="$KILL_FILE -0"
 
+SED_FILE=/bin/sed
+SED_BIN="$SED_FILE -e"
+
+MD5SUM_FILE=/usr/bin/md5sum
+MD5SUM_BIN="$MD5SUM_FILE"
+
 BAK_ENVIRONMENT_LIST=(
    "$TAR_FILE"
    "$RM_FILE"
@@ -155,6 +161,9 @@ BAK_ENVIRONMENT_LIST=(
    "$CUT_FILE"
    "$CHMOD_FILE"
    "$CHOWN_FILE"
+   "$KILL_FILE"
+   "$SED_FILE"
+   "$MD5SUM_FILE"
 )
 
 ##################################################################

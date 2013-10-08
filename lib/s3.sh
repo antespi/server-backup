@@ -173,6 +173,9 @@ s3_put() {
    local error=0
    local file=$1
    local name=`basename $file`
+   local infofile="/tmp/$name_$$.info"
+   local localmd5=
+   local s3md5=
 
    if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi
 
@@ -183,6 +186,26 @@ s3_put() {
    else
       error=1
    fi
+
+   # Get file info from S3
+   if [ $error -eq 0 ]; then
+      $BAK_S3_EXISTS_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" > $infofile 2>&1
+      $error=$?
+   fi
+
+   # Compare local MD5sum vs S3 MD5sum
+   if [ $error -eq 0 ]; then
+      s3md5=`$CAT_BIN "$infofile" | $GREP_BIN "MD5 sum" | $SED_BIN 's/ *//g' | $CUT_BIN -d':' -f2`
+      localmd5=`$MD5SUM_BIN "$file" | $CUT_BIN -d' ' -f1`
+      $ECHO_BIN "       : S3 MD5    = $s3md5" >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN "       : LOCAL MD5 = $localmd5" >> $BAK_OUTPUT_EXTENDED
+      if [ "$s3md5" != "$localmd5" ]; then
+         $ECHO_BIN "ERROR  : MD5 SUM are not equal!" >> $BAK_OUTPUT_EXTENDED
+         error=2
+      fi
+   fi
+
+   $RM_BIN "$infofile"
    return $error
 }
 
