@@ -758,7 +758,7 @@ log_end_print() {
 lock_check_and_set() {
    if [ -f $BAK_LOCK ]; then
       pid=`$CAT_BIN "$BAK_LOCK"`
-      if $PID_CHECK_BIN $pid; then
+      if $PID_CHECK_BIN $pid > $BAK_NULL_OUTPUT 2>&1; then
          $ECHO_BIN "ERROR : Another backup process detected on pid = $pid" >> $BAK_OUTPUT
          return 1
       else
