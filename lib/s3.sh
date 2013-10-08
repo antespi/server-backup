@@ -190,7 +190,7 @@ s3_put() {
    # Get file info from S3
    if [ $error -eq 0 ]; then
       $BAK_S3_EXISTS_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" > $infofile 2>&1
-      $error=$?
+      error=$?
    fi
 
    # Compare local MD5sum vs S3 MD5sum
