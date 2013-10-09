@@ -805,6 +805,7 @@ lock_set() {
 lock_release() {
    $RM_BIN "$BAK_LOCK"
    $RM_BIN "$BAK_TEMP_PATH"/*
+   $RM_BIN "$BAK_OUTPUT_PATH"/*
 }
 
 

@@ -224,6 +224,12 @@ $ECHO_BIN " CMD : $RM_BIN '$BAK_TEMP_PATH/*'" >> $BAK_OUTPUT_EXTENDED
 $RM_BIN "$BAK_TEMP_PATH"/*
 $ECHO_BIN "OK" >> $BAK_OUTPUT
 
+# Delete out directory
+$ECHO_BIN -n "Deleting out directory ... " >> $BAK_OUTPUT
+$ECHO_BIN " CMD : $RM_BIN '$BAK_OUTPUT_PATH/*'" >> $BAK_OUTPUT_EXTENDED
+$RM_BIN "$BAK_OUTPUT_PATH"/*
+$ECHO_BIN "OK" >> $BAK_OUTPUT
+
 # Backup configuration
 server_configuration_backup
 berror=$?
