@@ -21,6 +21,7 @@ BAK_S3_CMD_BIN='/usr/bin/s3cmd'
 BAK_S3_CONFIG_FILE="$BAK_CONFIG_PATH/.s3cfg"
 BAK_S3_GET_BIN="$BAK_S3_CMD_BIN -c $BAK_S3_CONFIG_FILE --no-progress get"
 BAK_S3_PUT_BIN="$BAK_S3_CMD_BIN -c $BAK_S3_CONFIG_FILE --no-progress put"
+BAK_S3_MV_BIN="$BAK_S3_CMD_BIN -c $BAK_S3_CONFIG_FILE mv"
 BAK_S3_EXISTS_BIN="$BAK_S3_CMD_BIN -c $BAK_S3_CONFIG_FILE info"
 BAK_S3_AUTOCHECK_BIN="$BAK_S3_CMD_BIN -c $BAK_S3_CONFIG_FILE info"
 
@@ -200,8 +201,18 @@ s3_put() {
       $ECHO_BIN "       : S3 MD5    = $s3md5" >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN "       : LOCAL MD5 = $localmd5" >> $BAK_OUTPUT_EXTENDED
       if [ "$s3md5" != "$localmd5" ]; then
-         $ECHO_BIN "ERROR  : MD5 SUM are not equal!" >> $BAK_OUTPUT_EXTENDED
-         error=2
+         $ECHO_BIN "ERROR  : MD5 SUM are not equal! Trying to fix it" >> $BAK_OUTPUT_EXTENDED
+         $BAK_S3_MV_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix" >> $BAK_OUTPUT_EXTENDED
+         $BAK_S3_EXISTS_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix" > $infofile 2>&1
+         s3md5=`$CAT_BIN "$infofile" | $GREP_BIN "MD5 sum" | $SED_BIN 's/ *//g' | $CUT_BIN -d':' -f2`
+         $ECHO_BIN "       : S3 MD5    = $s3md5" >> $BAK_OUTPUT_EXTENDED
+         if [ "$s3md5" != "$localmd5" ]; then
+            $ECHO_BIN "ERROR  : MD5 SUM are not equal, again!" >> $BAK_OUTPUT_EXTENDED
+            error=2
+         else
+            $ECHO_BIN "OK     : Now MD5 SUM matches!" >> $BAK_OUTPUT_EXTENDED
+            $BAK_S3_MV_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" >> $BAK_OUTPUT_EXTENDED
+         fi
       fi
    fi
 
