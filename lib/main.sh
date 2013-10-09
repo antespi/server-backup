@@ -464,13 +464,16 @@ backup_process() {
       if [ $BAK_DEBUG -eq 1 ]; then
          $ECHO_BIN -n "$COMPRESS_BIN '$tarfile' '$dir' ... " >> $BAK_OUTPUT
       else
+         $ECHO_BIN " CMD : $COMPRESS_BIN '$tarfile' '$dir'" >> $BAK_OUTPUT_EXTENDED
          $COMPRESS_BIN "$tarfile" "$dir"  > $BAK_NULL_OUTPUT 2>&1
       fi
       error=$?
       if [ $error -eq 0 ]; then
          $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+         $ECHO_BIN " CMD : file_size '$tarfile'" >> $BAK_OUTPUT_EXTENDED
          size=`file_size $tarfile`
          $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+         $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
       else
          $ECHO_BIN "FAIL (error = $error)" >> $BAK_OUTPUT;
       fi
@@ -493,13 +496,16 @@ backup_process() {
          if [ $BAK_DEBUG -eq 1 ]; then
             $ECHO_BIN -n "$OPENSSL_ENC_BIN -in '$tarfile' -out '$encfile' ... " >> $BAK_OUTPUT
          else
+            $ECHO_BIN " CMD : $OPENSSL_ENC_BIN -in '$tarfile' -out '$encfile'" >> $BAK_OUTPUT_EXTENDED
             $OPENSSL_ENC_BIN -in "$tarfile" -out "$encfile"
          fi
          error=$?
          if [ $error -eq 0 ]; then
             $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+            $ECHO_BIN " CMD : file_size '$tarfile'" >> $BAK_OUTPUT_EXTENDED
             size=`file_size $encfile`
             $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+            $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
             if [ $BAK_DEBUG -eq 0 ]; then
                $RM_BIN "$tarfile"
             fi
@@ -539,6 +545,7 @@ backup_process() {
             if [ $BAK_DEBUG -eq 1 ]; then
                $ECHO_BIN -n "$MV_BIN '$file_to_upload' '$BAK_LOCAL_PATH' ... " >> $BAK_OUTPUT
             else
+               $ECHO_BIN " CMD : $MV_BIN '$file_to_upload' '$BAK_LOCAL_PATH'" >> $BAK_OUTPUT_EXTENDED
                $MV_BIN "$file_to_upload" "$BAK_LOCAL_PATH"
             fi
          else
@@ -546,6 +553,7 @@ backup_process() {
             if [ $BAK_DEBUG -eq 1 ]; then
                $ECHO_BIN -n "$RM_BIN '$file_to_upload' ... " >> $BAK_OUTPUT
             else
+               $ECHO_BIN " CMD : $RM_BIN '$file_to_upload'" >> $BAK_OUTPUT_EXTENDED
                $RM_BIN "$file_to_upload"
             fi
          fi
