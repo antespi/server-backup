@@ -404,7 +404,7 @@ source_backup() {
       source_error=$?
 
       if [ $inc -eq 1 ]; then
-         if [ $source_error -eq 0 ] && [ $source_error -eq 1 ]; then
+         if [ $source_error -eq 0 ] || [ $source_error -eq 1 ]; then
             # Copy inc file to target
             if [ $BAK_DEBUG -eq 1 ]; then
                source_error=0
@@ -464,7 +464,9 @@ backup_process() {
    local size=0
 
    if [ -e "$dir" ] && [ -n "$name" ]; then
+      $ECHO_BIN " CMD : dir_size '$dir'" >> $BAK_OUTPUT_EXTENDED
       size=`dir_size "$dir"`
+      $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN "         Process Backup '$name' ($size)" >> $BAK_OUTPUT
       # Compress $dir into output dir
       $ECHO_BIN -n "         -> Compress backup files ... " >> $BAK_OUTPUT
@@ -511,7 +513,7 @@ backup_process() {
          error=$?
          if [ $error -eq 0 ]; then
             $ECHO_BIN -n "OK" >> $BAK_OUTPUT
-            $ECHO_BIN " CMD : file_size '$tarfile'" >> $BAK_OUTPUT_EXTENDED
+            $ECHO_BIN " CMD : file_size '$encfile'" >> $BAK_OUTPUT_EXTENDED
             size=`file_size $encfile`
             $ECHO_BIN " ($size)" >> $BAK_OUTPUT
             $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED

@@ -161,7 +161,7 @@ s3_get() {
    if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi
 
    if [ -f "$file" ]; then
-      $ECHO_BIN "S3 GET : '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name' -> '$file'" >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN " CMD : $BAK_S3_GET_BIN '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name' '$file'" >> $BAK_OUTPUT_EXTENDED
       $BAK_S3_GET_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" "$file" >> $BAK_OUTPUT_EXTENDED 2>&1
       error=$?
    else
@@ -181,7 +181,7 @@ s3_put() {
    if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi
 
    if [ -f "$file" ]; then
-      $ECHO_BIN "S3 PUT : '$file' -> '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN " CMD : $BAK_S3_PUT_BIN '$file' '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
       $BAK_S3_PUT_BIN "$file" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name"  >> $BAK_OUTPUT_EXTENDED 2>&1
       error=$?
    else
@@ -190,7 +190,8 @@ s3_put() {
 
    # Get file info from S3
    if [ $error -eq 0 ]; then
-      $BAK_S3_EXISTS_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" > $infofile 2>&1
+      $ECHO_BIN " CMD : $BAK_S3_EXISTS_BIN '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name' > $infofile" >> $BAK_OUTPUT_EXTENDED
+      $BAK_S3_EXISTS_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" > "$infofile" 2>&1
       error=$?
    fi
 
@@ -198,24 +199,28 @@ s3_put() {
    if [ $error -eq 0 ]; then
       s3md5=`$CAT_BIN "$infofile" | $GREP_BIN "MD5 sum" | $SED_BIN 's/ *//g' | $CUT_BIN -d':' -f2`
       localmd5=`$MD5SUM_BIN "$file" | $CUT_BIN -d' ' -f1`
-      $ECHO_BIN "       : S3 MD5    = $s3md5" >> $BAK_OUTPUT_EXTENDED
-      $ECHO_BIN "       : LOCAL MD5 = $localmd5" >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN " S3 MD5    : $s3md5" >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN " LOCAL MD5 : $localmd5" >> $BAK_OUTPUT_EXTENDED
       if [ "$s3md5" != "$localmd5" ]; then
-         $ECHO_BIN "ERROR  : MD5 SUM are not equal! Trying to fix it" >> $BAK_OUTPUT_EXTENDED
+         $ECHO_BIN " ERROR : MD5 SUM are not equal! Trying to fix it" >> $BAK_OUTPUT_EXTENDED
+         $ECHO_BIN " CMD : $BAK_S3_MV_BIN '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name' '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix'" >> $BAK_OUTPUT_EXTENDED
          $BAK_S3_MV_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix" >> $BAK_OUTPUT_EXTENDED
-         $BAK_S3_EXISTS_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix" > $infofile 2>&1
+         $ECHO_BIN " CMD : $BAK_S3_EXISTS_BIN '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix' > $infofile" >> $BAK_OUTPUT_EXTENDED
+         $BAK_S3_EXISTS_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix" > "$infofile" 2>&1
          s3md5=`$CAT_BIN "$infofile" | $GREP_BIN "MD5 sum" | $SED_BIN 's/ *//g' | $CUT_BIN -d':' -f2`
-         $ECHO_BIN "       : S3 MD5    = $s3md5" >> $BAK_OUTPUT_EXTENDED
+         $ECHO_BIN " S3 MD5    : $s3md5" >> $BAK_OUTPUT_EXTENDED
          if [ "$s3md5" != "$localmd5" ]; then
-            $ECHO_BIN "ERROR  : MD5 SUM are not equal, again!" >> $BAK_OUTPUT_EXTENDED
+            $ECHO_BIN " ERROR : MD5 SUM are not equal, again!" >> $BAK_OUTPUT_EXTENDED
             error=2
          else
-            $ECHO_BIN "OK     : Now MD5 SUM matches!" >> $BAK_OUTPUT_EXTENDED
+            $ECHO_BIN " OK  : Now MD5 SUM matches!" >> $BAK_OUTPUT_EXTENDED
+            $ECHO_BIN " CMD : $BAK_S3_MV_BIN '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix' '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
             $BAK_S3_MV_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" >> $BAK_OUTPUT_EXTENDED
          fi
       fi
    fi
 
+   $ECHO_BIN " CMD : $RM_BIN '$infofile'" >> $BAK_OUTPUT_EXTENDED
    $RM_BIN "$infofile"
    return $error
 }
