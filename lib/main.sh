@@ -184,7 +184,7 @@ old_files_rm () {
       $FIND_BIN "$PATH" -type f -mtime +$DAYS | while read file
       do
          $ECHO_BIN " CMD : $RM_BIN '$file'" >> $BAK_OUTPUT_EXTENDED
-         $RM_BIN "$file"
+         $RM_BIN "$file" >> $BAK_OUTPUT_EXTENDED 2>&1
       done
    else
       $ECHO_BIN "ERROR : Bad parameters in 'old_files_rm' PATH = '$PATH', DAYS = '$DAYS'" >> $BAK_OUTPUT
@@ -223,7 +223,7 @@ mysql_databases_backup() {
             $ECHO_BIN -n "$BAK_MYSQL_DATABASE_BACKUP_CMD $i > '$file' ... " >> $BAK_OUTPUT
          else
             $ECHO_BIN " CMD : $BAK_MYSQL_DATABASE_BACKUP_CMD $i > '$file'" >> $BAK_OUTPUT_EXTENDED
-            $BAK_MYSQL_DATABASE_BACKUP_CMD $i > "$file" 2>> $BAK_OUTPUT
+            $BAK_MYSQL_DATABASE_BACKUP_CMD $i > "$file" >> $BAK_OUTPUT_EXTENDED 2>&1
          fi
          db_error=$?
          if [ $db_error -eq 0 ];then
@@ -410,7 +410,7 @@ source_backup() {
                source_error=0
             else
                $ECHO_BIN " CMD : $CP_BIN '$local_incfile' '$remote_incfile'" >> $BAK_OUTPUT_EXTENDED
-               $CP_BIN "$local_incfile" "$remote_incfile"
+               $CP_BIN "$local_incfile" "$remote_incfile" >> $BAK_OUTPUT_EXTENDED 2>&1
             fi
          fi
       fi
@@ -475,7 +475,7 @@ backup_process() {
          $ECHO_BIN -n "$COMPRESS_BIN '$tarfile' '$dir' ... " >> $BAK_OUTPUT
       else
          $ECHO_BIN " CMD : $COMPRESS_BIN '$tarfile' '$dir'" >> $BAK_OUTPUT_EXTENDED
-         $COMPRESS_BIN "$tarfile" "$dir"  > $BAK_NULL_OUTPUT 2>&1
+         $COMPRESS_BIN "$tarfile" "$dir" >> $BAK_OUTPUT_EXTENDED 2>&1
       fi
       error=$?
       if [ $error -eq 0 ]; then
@@ -496,7 +496,7 @@ backup_process() {
          $ECHO_BIN -n "$RM_BIN '$dir'/* ... " >> $BAK_OUTPUT
       else
          $ECHO_BIN " CMD : $RM_BIN '$dir'/*" >> $BAK_OUTPUT_EXTENDED
-         $RM_BIN "$dir"/*
+         $RM_BIN "$dir"/* >> $BAK_OUTPUT_EXTENDED 2>&1
       fi
       $ECHO_BIN "OK" >> $BAK_OUTPUT
 
@@ -508,7 +508,7 @@ backup_process() {
             $ECHO_BIN -n "$OPENSSL_ENC_BIN -in '$tarfile' -out '$encfile' ... " >> $BAK_OUTPUT
          else
             $ECHO_BIN " CMD : $OPENSSL_ENC_BIN -in '$tarfile' -out '$encfile'" >> $BAK_OUTPUT_EXTENDED
-            $OPENSSL_ENC_BIN -in "$tarfile" -out "$encfile"
+            $OPENSSL_ENC_BIN -in "$tarfile" -out "$encfile" >> $BAK_OUTPUT_EXTENDED 2>&1
          fi
          error=$?
          if [ $error -eq 0 ]; then
@@ -519,7 +519,7 @@ backup_process() {
             $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
             if [ $BAK_DEBUG -eq 0 ]; then
                $ECHO_BIN " CMD : $RM_BIN '$tarfile'" >> $BAK_OUTPUT_EXTENDED
-               $RM_BIN "$tarfile"
+               $RM_BIN "$tarfile" >> $BAK_OUTPUT_EXTENDED 2>&1
             fi
             file_to_upload="$encfile"
          else $ECHO_BIN "FAIL (error = $error)" >> $BAK_OUTPUT; fi
@@ -558,7 +558,7 @@ backup_process() {
                $ECHO_BIN -n "$MV_BIN '$file_to_upload' '$BAK_LOCAL_PATH' ... " >> $BAK_OUTPUT
             else
                $ECHO_BIN " CMD : $MV_BIN '$file_to_upload' '$BAK_LOCAL_PATH'" >> $BAK_OUTPUT_EXTENDED
-               $MV_BIN "$file_to_upload" "$BAK_LOCAL_PATH"
+               $MV_BIN "$file_to_upload" "$BAK_LOCAL_PATH" >> $BAK_OUTPUT_EXTENDED 2>&1
             fi
          else
             $ECHO_BIN -n "         -> Delete backup ... " >> $BAK_OUTPUT
@@ -566,7 +566,7 @@ backup_process() {
                $ECHO_BIN -n "$RM_BIN '$file_to_upload' ... " >> $BAK_OUTPUT
             else
                $ECHO_BIN " CMD : $RM_BIN '$file_to_upload'" >> $BAK_OUTPUT_EXTENDED
-               $RM_BIN "$file_to_upload"
+               $RM_BIN "$file_to_upload" >> $BAK_OUTPUT_EXTENDED 2>&1
             fi
          fi
          $ECHO_BIN "OK" >> $BAK_OUTPUT

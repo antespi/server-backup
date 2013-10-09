@@ -227,19 +227,19 @@ $ECHO_BIN "OK" >> $BAK_OUTPUT
 # Backup configuration
 server_configuration_backup
 berror=$?
-if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making Server Configuration backup (error = $berror)"; fi
+if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making Server Configuration backup (error = $berror)" >> $BAK_OUTPUT; fi
 if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
 
 # Backup databases
 mysql_databases_backup
 berror=$?
-if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making Databases backup (error = $berror)"; fi
+if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making Databases backup (error = $berror)" >> $BAK_OUTPUT; fi
 if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
 
 # Backup sources
 sources_backup_loop
 berror=$?
-if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making Sources backup (error = $berror)"; fi
+if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making Sources backup (error = $berror)" >> $BAK_OUTPUT; fi
 if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
 
 info_get

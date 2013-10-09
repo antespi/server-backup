@@ -204,7 +204,7 @@ s3_put() {
       if [ "$s3md5" != "$localmd5" ]; then
          $ECHO_BIN " ERROR : MD5 SUM are not equal! Trying to fix it" >> $BAK_OUTPUT_EXTENDED
          $ECHO_BIN " CMD : $BAK_S3_MV_BIN '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name' '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix'" >> $BAK_OUTPUT_EXTENDED
-         $BAK_S3_MV_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix" >> $BAK_OUTPUT_EXTENDED
+         $BAK_S3_MV_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix" >> $BAK_OUTPUT_EXTENDED 2>&1
          $ECHO_BIN " CMD : $BAK_S3_EXISTS_BIN '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix' > $infofile" >> $BAK_OUTPUT_EXTENDED
          $BAK_S3_EXISTS_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix" > "$infofile" 2>&1
          s3md5=`$CAT_BIN "$infofile" | $GREP_BIN "MD5 sum" | $SED_BIN 's/ *//g' | $CUT_BIN -d':' -f2`
@@ -215,13 +215,13 @@ s3_put() {
          else
             $ECHO_BIN " OK  : Now MD5 SUM matches!" >> $BAK_OUTPUT_EXTENDED
             $ECHO_BIN " CMD : $BAK_S3_MV_BIN '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix' '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
-            $BAK_S3_MV_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" >> $BAK_OUTPUT_EXTENDED
+            $BAK_S3_MV_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/${name}.fix" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" >> $BAK_OUTPUT_EXTENDED 2>&1
          fi
       fi
    fi
 
    $ECHO_BIN " CMD : $RM_BIN '$infofile'" >> $BAK_OUTPUT_EXTENDED
-   $RM_BIN "$infofile"
+   $RM_BIN "$infofile" >> $BAK_OUTPUT_EXTENDED 2>&1
    return $error
 }
 
