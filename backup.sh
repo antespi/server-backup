@@ -213,9 +213,16 @@ fi
 # Delete local backend (if enabled)
 if [ -n "$BAK_LOCAL_PATH" ]; then
    $ECHO_BIN -n "Deleting local backend ... " >> $BAK_OUTPUT
+   $ECHO_BIN " CMD : $RM_BIN '$BAK_LOCAL_PATH/*'" >> $BAK_OUTPUT_EXTENDED
    $RM_BIN "$BAK_LOCAL_PATH"/*
    $ECHO_BIN "OK" >> $BAK_OUTPUT
 fi
+
+# Delete tmp directory
+$ECHO_BIN -n "Deleting tmp directory ... " >> $BAK_OUTPUT
+$ECHO_BIN " CMD : $RM_BIN '$BAK_TEMP_PATH/*'" >> $BAK_OUTPUT_EXTENDED
+$RM_BIN "$BAK_TEMP_PATH"/*
+$ECHO_BIN "OK" >> $BAK_OUTPUT
 
 # Backup configuration
 server_configuration_backup
