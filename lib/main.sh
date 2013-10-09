@@ -389,6 +389,9 @@ source_backup() {
       if [ $BAK_DEBUG -eq 1 ]; then
          $ECHO_BIN -n "$TAR_BIN $extra $TAR_OPTS '$tarfile' '$dir' ... " >> $BAK_OUTPUT
       else
+         $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
+         $ECHO_BIN " CMD : $TAR_BIN $extra $TAR_OPTS '$tarfile' '$dir'" >> $BAK_OUTPUT_EXTENDED
+         $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
          $TAR_BIN $extra $TAR_OPTS "$tarfile" "$dir" >> $BAK_OUTPUT_EXTENDED 2>&1
       fi
       source_error=$?
@@ -406,12 +409,16 @@ source_backup() {
 
       if [ $source_error -eq 0 ]; then
          $ECHO_BIN -n "OK" >> $BAK_OUTPUT
-         size=`file_size $tarfile`
+         $ECHO_BIN " CMD : file_size '$tarfile'" >> $BAK_OUTPUT_EXTENDED
+         size=`file_size "$tarfile"`
          $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+         $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
       elif [ $source_error -eq 1 ]; then
          $ECHO_BIN -n "WARNING" >> $BAK_OUTPUT
-         size=`file_size $tarfile`
+         $ECHO_BIN " CMD : file_size '$tarfile'" >> $BAK_OUTPUT_EXTENDED
+         size=`file_size "$tarfile"`
          $ECHO_BIN " ($size, some files were changed while being archived)" >> $BAK_OUTPUT
+         $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
       else
          $ECHO_BIN "FAIL (error = $source_error)" >> $BAK_OUTPUT
          error=$source_error
