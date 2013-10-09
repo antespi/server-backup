@@ -183,6 +183,7 @@ old_files_rm () {
       $ECHO_BIN "Deleting files from '$PATH' older than $DAYS days" >> $BAK_OUTPUT
       $FIND_BIN "$PATH" -type f -mtime +$DAYS | while read file
       do
+         $ECHO_BIN " CMD : $RM_BIN '$file'" >> $BAK_OUTPUT_EXTENDED
          $RM_BIN "$file"
       done
    else
@@ -221,13 +222,16 @@ mysql_databases_backup() {
          if [ $BAK_DEBUG -eq 1 ]; then
             $ECHO_BIN -n "$BAK_MYSQL_DATABASE_BACKUP_CMD $i > '$file' ... " >> $BAK_OUTPUT
          else
+            $ECHO_BIN " CMD : $BAK_MYSQL_DATABASE_BACKUP_CMD $i > '$file'" >> $BAK_OUTPUT_EXTENDED
             $BAK_MYSQL_DATABASE_BACKUP_CMD $i > "$file" 2>> $BAK_OUTPUT
          fi
          db_error=$?
          if [ $db_error -eq 0 ];then
             $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+            $ECHO_BIN " CMD : file_size '$file'" >> $BAK_OUTPUT_EXTENDED
             size=`file_size $file`
             $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+            $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
          else
             $ECHO_BIN "FAIL (error = $db_error)" >> $BAK_OUTPUT
             error=1
@@ -276,13 +280,16 @@ server_configuration_backup() {
          if [ $BAK_DEBUG -eq 1 ]; then
             $ECHO_BIN -n "$TAR_BIN $TAR_OPTS '$file' '$source' ... " >> $BAK_OUTPUT
          else
+            $ECHO_BIN " CMD : $TAR_BIN $TAR_OPTS '$file' '$source'" >> $BAK_OUTPUT_EXTENDED
             $TAR_BIN $TAR_OPTS "$file" "$source" >> $BAK_OUTPUT_EXTENDED 2>&1
          fi
          config_error=$?
          if [ $config_error -eq 0 ];then
             $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+            $ECHO_BIN " CMD : file_size '$file'" >> $BAK_OUTPUT_EXTENDED
             size=`file_size $file`
             $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+            $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
          else
             $ECHO_BIN "FAIL (error = $config_error)" >> $BAK_OUTPUT
             error=1
@@ -379,8 +386,10 @@ source_backup() {
       remote_incfile="$target/$incfile"
 
       $ECHO_BIN -n "      '$target' <- '$dir'" >> $BAK_OUTPUT
+      $ECHO_BIN " CMD : dir_size '$dir'" >> $BAK_OUTPUT_EXTENDED
       size=`dir_size $dir`
       $ECHO_BIN -n " ($size) ... " >> $BAK_OUTPUT
+      $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
 
       if [ $inc -eq 1 ]; then
          extra="-g $local_incfile"
@@ -389,9 +398,7 @@ source_backup() {
       if [ $BAK_DEBUG -eq 1 ]; then
          $ECHO_BIN -n "$TAR_BIN $extra $TAR_OPTS '$tarfile' '$dir' ... " >> $BAK_OUTPUT
       else
-         $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
          $ECHO_BIN " CMD : $TAR_BIN $extra $TAR_OPTS '$tarfile' '$dir'" >> $BAK_OUTPUT_EXTENDED
-         $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
          $TAR_BIN $extra $TAR_OPTS "$tarfile" "$dir" >> $BAK_OUTPUT_EXTENDED 2>&1
       fi
       source_error=$?
@@ -402,6 +409,7 @@ source_backup() {
             if [ $BAK_DEBUG -eq 1 ]; then
                source_error=0
             else
+               $ECHO_BIN " CMD : $CP_BIN '$local_incfile' '$remote_incfile'" >> $BAK_OUTPUT_EXTENDED
                $CP_BIN "$local_incfile" "$remote_incfile"
             fi
          fi
@@ -485,6 +493,7 @@ backup_process() {
       if [ $BAK_DEBUG -eq 1 ]; then
          $ECHO_BIN -n "$RM_BIN '$dir'/* ... " >> $BAK_OUTPUT
       else
+         $ECHO_BIN " CMD : $RM_BIN '$dir'/*" >> $BAK_OUTPUT_EXTENDED
          $RM_BIN "$dir"/*
       fi
       $ECHO_BIN "OK" >> $BAK_OUTPUT
@@ -507,6 +516,7 @@ backup_process() {
             $ECHO_BIN " ($size)" >> $BAK_OUTPUT
             $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
             if [ $BAK_DEBUG -eq 0 ]; then
+               $ECHO_BIN " CMD : $RM_BIN '$tarfile'" >> $BAK_OUTPUT_EXTENDED
                $RM_BIN "$tarfile"
             fi
             file_to_upload="$encfile"
