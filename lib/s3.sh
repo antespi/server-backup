@@ -186,6 +186,7 @@ s3_put() {
    local infofile="/tmp/$name_$$.info"
    local localmd5=
    local s3md5=
+   local chunk_size=`$GREP_BIN "multipart_chunk_size_mb" "$BAK_S3_CONFIG_FILE" | $SED_BIN 's/ *//g' | $CUT_BIN -d'=' -f2`
 
    if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi
 
@@ -208,7 +209,7 @@ s3_put() {
    if [ $error -eq 0 ]; then
       s3md5=`$CAT_BIN "$infofile" | $GREP_BIN "MD5 sum" | $SED_BIN 's/ *//g' | $CUT_BIN -d':' -f2`
       localmd5=`$MD5SUM_BIN "$file" | $CUT_BIN -d' ' -f1`
-      localetag=`$BAK_S3_MD5_BIN "$file"`
+      localetag=`$BAK_S3_MD5_BIN "$chunk_size" "$file"`
       $ECHO_BIN " S3 MD5     : $s3md5" >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN " LOCAL MD5  : $localmd5" >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN " LOCAL ETAG : $localetag" >> $BAK_OUTPUT_EXTENDED
