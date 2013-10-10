@@ -223,7 +223,7 @@ mysql_databases_backup() {
             $ECHO_BIN -n "$BAK_MYSQL_DATABASE_BACKUP_CMD $i > '$file' ... " >> $BAK_OUTPUT
          else
             $ECHO_BIN " CMD : $BAK_MYSQL_DATABASE_BACKUP_CMD $i > '$file'" >> $BAK_OUTPUT_EXTENDED
-            $BAK_MYSQL_DATABASE_BACKUP_CMD $i > "$file" >> $BAK_OUTPUT_EXTENDED 2>&1
+            $BAK_MYSQL_DATABASE_BACKUP_CMD $i > "$file" 2>> $BAK_OUTPUT_EXTENDED
          fi
          db_error=$?
          if [ $db_error -eq 0 ];then
