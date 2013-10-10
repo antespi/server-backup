@@ -247,7 +247,7 @@ See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along
 with Server-Backup. For license details you can read
-[LICENSE.md](https://github.com/antespi/server-backup/blob/master/LICENSE.md)
+[LICENSE.md](https://github.com/Teachnova/server-backup/blob/master/LICENSE.md)
 file. Also you can read GPLv3 from [GNU Licenses](http://www.gnu.org/licenses/).
 
 
