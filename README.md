@@ -44,12 +44,14 @@ Installation
 an AWS account, AWS credentials (accessKey and secretKey) and create
 an S3 Bucket. Be sure that user has enoght rights to get and put files
 to that S3 Bucket. You need s3cmd installed and configured.
-8.    Configure a cron file (/etc/cron.d/backup) like this
+8.    Configure a cron file like this
+
+/etc/cron.d/backup
 
     0   1    * * 1-6  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
     0  22    * * 5    root  /root/server-backup/backup.sh --snapshot &> /root/server-backup/last_snapshot.log
 
-    Or copy from sample
+Or copy from sample
 
     # cp -a /root/server-backup/cron-backup-sample /etc/cron.d/backup
 
@@ -69,7 +71,9 @@ Configuration
 -   database.conf : Database configuration
 
     1.  Databases to backup
-    2.  Create a .my.cnf file in /root : nano /root/.my.cnf
+    2.  Create a .my.cnf file in /root : 
+
+nano /root/.my.cnf
 
         [mysqldump]
         host = localhost
@@ -81,7 +85,8 @@ Configuration
         user = root
         password = <your-mysql-root-pass>
 
-    3. Be sure this file is only root readable
+
+Be sure this file is only root readable
 
         # chmod 640 /root/.my.cnf
         # chown root:root /root/.my.cnf
@@ -109,10 +114,12 @@ Configuration
     1.  S3 bucket
     2.  Copy .s3cfg generated after (in pre-installation) to /root/server-backup
 
+/root/server-backup
+
         # chmod 640 /root/server-backup/config/.s3cfg
         # chmod root:root /root/server-backup/config/.s3cfg
 
-    3. We recommend to change chunk sizes to improve upload performance in big files
+We recommend to change chunk sizes to improve upload performance in big files
 
         # nano /root/server-backup/config/.s3cfg
             multipart_chunk_size_mb = 1024
@@ -123,6 +130,8 @@ Configuration
 -   ftp.conf : FTP Backend configuration
 
     1. Create .ftpcfg file with host, user and password info
+
+/root/server-backup/config/.ftpcfg
 
         # nano /root/server-backup/config/.ftpcfg
             host sphygmomanometer.ncftp.com
@@ -137,11 +146,13 @@ Configuration
 
 -   ecn.key : Encryption key
 
-    1. Change key. You can create an aleatory key with pwgen
+    1. Change key. You can create a random key with pwgen
+
+Random key
 
         # pwgen -B -s 64
 
-    2. Be sure this file is only root readable
+Be sure this file is only root readable
 
         # chmod 640 config/enc.key
         # chown root:root config/enc.key
