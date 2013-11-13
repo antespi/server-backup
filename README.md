@@ -213,6 +213,16 @@ This is what 'backup.sh --snapshot' script do each time is invoked by you or by 
 
 
 
+Restore process
+===============
+
+You can get any .tar.gz.enc file located in local folder (or any activated backend: S3, FTP). 
+Then you can manually decrypt and decompress it like this:
+
+    # openssl enc -aes-256-cbc -d -salt -pass file:/root/server-backup/config/enc.key -in file.tar.gz.enc -out file.tar.gz
+    # tar -xzf file.tar.gz
+
+
 TODO
 ====
 
