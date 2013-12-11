@@ -34,7 +34,7 @@ BAK_S3_ERROR=0
 s3_check() {
    if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi
 
-   if $BAK_S3_AUTOCHECK_BIN "$BAK_S3_BASE/" 2>&1 | grep -q "ERROR"; then
+   if $BAK_S3_AUTOCHECK_BIN "s3://$BAK_S3_BUCKET" 2>&1 | grep -q "ERROR"; then
       return 1
    fi
    return $?
