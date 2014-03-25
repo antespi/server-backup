@@ -57,6 +57,20 @@ if [ ! -d "$BAK_CONFIG_PATH" ] && [ -d "$BAK_CONFIG_DIST_PATH" ]; then
    /bin/cp -a "$BAK_CONFIG_DIST_PATH" "$BAK_CONFIG_PATH"
 fi
 
+### Default Configuration ##################################################
+
+BAK_ENABLED=0
+BAK_DEBUG=1
+
+BAK_SEND_MAIL_ERR=0
+BAK_SEND_MAIL_LOG=0
+
+BAK_ENCRYPT=1
+
+BAK_DATABASE_ENABLED=1
+BAK_DATABASE_WARNING_IF_DOWN=0
+BAK_DATABASE_ALLOW_ALL=1
+
 ### Configuration ##################################################
 
 BAK_CONFIG_GENERAL_FILE="$BAK_CONFIG_PATH/general.conf"
