@@ -191,6 +191,11 @@ old_files_rm () {
    fi
 }
 
+mysql_check() {
+   service mysql status &> /dev/null
+   return $?
+}
+
 ##################################################################
 # mysql_databases_backup
 #  Backup MySQL databases
@@ -207,6 +212,25 @@ mysql_databases_backup() {
    if [ $BAK_DATABASE_ENABLED -eq 0 ]; then
       $ECHO_BIN "   Disabled by configuration" >> $BAK_OUTPUT
       return 0
+   fi
+
+   if ! mysql_check; then
+      # If make backup of MySQL data folder
+      if [ -n "$BAK_DATABASE_DATA_IF_DOWN" ] && [ -d "$BAK_DATABASE_DATA_IF_DOWN" ]; then
+         $ECHO_BIN "   WARNING - MySQL is not running, backup of MySQL files" >> $BAK_OUTPUT
+         mysql_datafiles_backup "$BAK_DATABASE_DATA_IF_DOWN"
+         return $?
+      fi
+
+      # If show only a warning
+      if [ $BAK_DATABASE_WARNING_IF_DOWN -eq 1 ]; then
+         $ECHO_BIN "   WARNING - MySQL is not running, showing warning only" >> $BAK_OUTPUT
+         return 0
+      fi
+
+      # Else, this is a error to be reported
+      $ECHO_BIN "   FAIL - MySQL is not running" >> $BAK_OUTPUT
+      return 1
    fi
 
    for i in $(eval $BAK_MYSQL_DATABASE_LIST_CMD);
@@ -250,6 +274,61 @@ mysql_databases_backup() {
 }
 
 ##################################################################
+# mysql_datafiles_backup "folder"
+#  Backup MySQL data files
+##################################################################
+mysql_datafiles_backup() {
+   local error=0
+   local config_error=0
+   local name=
+   local index=
+   local source="$1"
+   local file=
+   local size=0
+
+   $ECHO_BIN >> $BAK_OUTPUT
+   $ECHO_BIN "Backup MySQL data files" >> $BAK_OUTPUT
+   name=${source/\//}
+   name=${source//\//_}
+   $ECHO_BIN -n "   '$source' ... " >> $BAK_OUTPUT
+   if [ -e $source ]; then
+      $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
+      current_date=`$DATE_BIN`
+      $ECHO_BIN " START $current_date" >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN " ACTION MySQL data files : $source " >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN " CMD : '$TAR_BIN' : source='$source'" >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
+      file="$BAK_CONFIG_SERVER_PATH/${BAK_DATE}-${name}-backup.tar.bz2"
+      if [ $BAK_DEBUG -eq 1 ]; then
+         $ECHO_BIN -n "$TAR_BIN $TAR_OPTS '$file' '$source' ... " >> $BAK_OUTPUT
+      else
+         $ECHO_BIN " CMD : $TAR_BIN $TAR_OPTS '$file' '$source'" >> $BAK_OUTPUT_EXTENDED
+         $TAR_BIN $TAR_OPTS "$file" "$source" >> $BAK_OUTPUT_EXTENDED 2>&1
+      fi
+      config_error=$?
+      if [ $config_error -eq 0 ];then
+         $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+         $ECHO_BIN " CMD : file_size '$file'" >> $BAK_OUTPUT_EXTENDED
+         size=`file_size $file`
+         $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+         $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
+      else
+         $ECHO_BIN "FAIL (error = $config_error)" >> $BAK_OUTPUT
+         error=1
+      fi
+   else
+      $ECHO_BIN "NOT FOUND" >> $BAK_OUTPUT
+   fi
+
+   # Process this backup
+   if [ $error -eq 0 ]; then
+      backup_process "$BAK_CONFIG_SERVER_PATH" "${BAK_DATE}-mysqlfiles"
+   fi
+
+   return $error
+}
+
+##################################################################
 # server_configuration_backup
 #  Backup server configuration files
 ##################################################################
@@ -274,7 +353,7 @@ server_configuration_backup() {
          current_date=`$DATE_BIN`
          $ECHO_BIN " START $current_date" >> $BAK_OUTPUT_EXTENDED
          $ECHO_BIN " ACTION Server configuration ($index) : $source " >> $BAK_OUTPUT_EXTENDED
-         $ECHO_BIN " CMD : '$TAR_BIN' : source=$source, depth=$depth, inc=$inc'" >> $BAK_OUTPUT_EXTENDED
+         $ECHO_BIN " CMD : '$TAR_BIN' : source=$source" >> $BAK_OUTPUT_EXTENDED
          $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
          file="$BAK_CONFIG_SERVER_PATH/${BAK_DATE}-${name}-backup.tar.bz2"
          if [ $BAK_DEBUG -eq 1 ]; then
@@ -307,6 +386,7 @@ server_configuration_backup() {
    return $error
 }
 
+
 ##################################################################
 # sources_backup
 #  Backup sources
@@ -334,7 +414,7 @@ sources_backup_loop() {
       current_date=`$DATE_BIN`
       $ECHO_BIN " START $current_date" >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN " ACTION Data ($index) : $source " >> $BAK_OUTPUT_EXTENDED
-      $ECHO_BIN " CMD : '$TAR_BIN' : source=$source, depth=$depth, inc=$inc'" >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN " CMD : '$TAR_BIN' : source='$source', depth=$depth, inc=$inc" >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
 
       # Check depth
