@@ -193,7 +193,7 @@ mysql_check() {
    service mysql status >> $BAK_OUTPUT_EXTENDED 2>&1
    error=$?
    $ECHO_BIN "-----------------------------------------------" >> $BAK_OUTPUT_EXTENDED
-   if $error; then
+   if [ $error -eq 0 ]; then
       $ECHO_BIN -n "OK" >> $BAK_OUTPUT
    else
       $ECHO_BIN -n "FAIL" >> $BAK_OUTPUT
