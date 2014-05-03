@@ -88,9 +88,6 @@ MV_BIN="$MV_FILE"
 CP_FILE=/bin/cp
 CP_BIN="$CP_FILE -a"
 
-SR_FILE="$BAK_LIB_PATH/sr.sh"
-SR_BIN="$SR_FILE -y"
-
 MKDIR_FILE=/bin/mkdir
 MKDIR_BIN="$MKDIR_FILE -p"
 
@@ -142,7 +139,6 @@ SED_BIN="$SED_FILE -e"
 MD5SUM_FILE=/usr/bin/md5sum
 MD5SUM_BIN="$MD5SUM_FILE"
 
-#   "$SR_FILE"
 BAK_ENVIRONMENT_LIST=(
    "$TAR_FILE"
    "$RM_FILE"
@@ -943,9 +939,6 @@ directories_create() {
    if [ -n "$BAK_LOCAL_PATH" ] && [ ! -d "$BAK_LOCAL_PATH" ]; then
       $ECHO_BIN "INFO : Creating local backend dir '$BAK_LOCAL_PATH'"
       $MKDIR_BIN "$BAK_LOCAL_PATH"
-      if [ -x $SR_BIN ]; then
-         $SR_BIN "$BAK_LOCAL_PATH"
-      fi
    fi
 
 }
