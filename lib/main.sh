@@ -142,12 +142,12 @@ SED_BIN="$SED_FILE -e"
 MD5SUM_FILE=/usr/bin/md5sum
 MD5SUM_BIN="$MD5SUM_FILE"
 
+#   "$SR_FILE"
 BAK_ENVIRONMENT_LIST=(
    "$TAR_FILE"
    "$RM_FILE"
    "$MV_FILE"
    "$CP_FILE"
-   "$SR_FILE"
    "$MKDIR_FILE"
    "$CAT_FILE"
    "$FIND_FILE"
@@ -943,7 +943,9 @@ directories_create() {
    if [ -n "$BAK_LOCAL_PATH" ] && [ ! -d "$BAK_LOCAL_PATH" ]; then
       $ECHO_BIN "INFO : Creating local backend dir '$BAK_LOCAL_PATH'"
       $MKDIR_BIN "$BAK_LOCAL_PATH"
-      $SR_BIN "$BAK_LOCAL_PATH"
+      if [ -x $SR_BIN ]; then
+         $SR_BIN "$BAK_LOCAL_PATH"
+      fi
    fi
 
 }
