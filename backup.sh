@@ -182,7 +182,6 @@ fi
 
 # Setup (if needed)
 executable_set "$BAK_PATH/backup.sh"
-executable_set "$BAK_LIB_PATH/sr.sh"
 
 $CHMOD_BIN 640 "$BAK_CONFIG_PATH/enc.key"
 $CHOWN_BIN root:root "$BAK_CONFIG_PATH/enc.key"
