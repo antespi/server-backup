@@ -192,8 +192,18 @@ old_files_rm () {
 }
 
 mysql_check() {
-   service mysql status &> /dev/null
-   return $?
+   $ECHO_BIN -n "MySQL status: " >> $BAK_OUTPUT
+   $ECHO_BIN "-----------------------------------------------" >> $BAK_OUTPUT_EXTENDED
+   service mysql status >> $BAK_OUTPUT_EXTENDED 2>&1
+   error=$?
+   $ECHO_BIN "-----------------------------------------------" >> $BAK_OUTPUT_EXTENDED
+   if $error; then
+      $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+   else
+      $ECHO_BIN -n "FAIL" >> $BAK_OUTPUT
+   fi
+   $ECHO_BIN " ($error)" >> $BAK_OUTPUT
+   return $error
 }
 
 ##################################################################
