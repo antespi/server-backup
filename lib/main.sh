@@ -139,6 +139,9 @@ SED_BIN="$SED_FILE -e"
 MD5SUM_FILE=/usr/bin/md5sum
 MD5SUM_BIN="$MD5SUM_FILE"
 
+SERVICE_FILE=/usr/sbin/service
+SERVICE_BIN="$SERVICE_FILE"
+
 BAK_ENVIRONMENT_LIST=(
    "$TAR_FILE"
    "$RM_FILE"
@@ -160,6 +163,7 @@ BAK_ENVIRONMENT_LIST=(
    "$KILL_FILE"
    "$SED_FILE"
    "$MD5SUM_FILE"
+   "$SERVICE_FILE"
 )
 
 ##################################################################
@@ -190,7 +194,7 @@ old_files_rm () {
 mysql_check() {
    $ECHO_BIN -n "MySQL status: " >> $BAK_OUTPUT
    $ECHO_BIN "- MYSQL Status --------------------------------" >> $BAK_OUTPUT_EXTENDED
-   service mysql status >> $BAK_OUTPUT_EXTENDED 2>&1
+   $SERVICE_BIN mysql status >> $BAK_OUTPUT_EXTENDED 2>&1
    error=$?
    $ECHO_BIN "-----------------------------------------------" >> $BAK_OUTPUT_EXTENDED
    if [ $error -eq 0 ]; then
