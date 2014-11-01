@@ -128,6 +128,14 @@ ftp_environment_check() {
    return 0
 }
 
+ftp_mount() {
+   return 0
+}
+
+ftp_umount() {
+   return 0
+}
+
 ftp_init() {
    local error=0
    local date=

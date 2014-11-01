@@ -67,9 +67,13 @@ BAK_SEND_MAIL_LOG=0
 
 BAK_ENCRYPT=1
 
-BAK_DATABASE_ENABLED=1
-BAK_DATABASE_WARNING_IF_DOWN=0
-BAK_DATABASE_ALLOW_ALL=1
+BAK_MYSQL_DATABASE_ENABLED=1
+BAK_MYSQL_DATABASE_WARNING_IF_DOWN=0
+BAK_MYSQL_DATABASE_ALLOW_ALL=1
+
+BAK_POSTGRESQL_DATABASE_ENABLED=1
+BAK_POSTGRESQL_DATABASE_WARNING_IF_DOWN=0
+BAK_POSTGRESQL_DATABASE_ALLOW_ALL=1
 
 ### Configuration ##################################################
 
@@ -196,8 +200,8 @@ if [ $BAK_ENABLED -eq 0 ]; then
    exit 1
 fi
 
-# Check directories and create them (if needed)
-directories_create
+# Check log directory and create it (if needed)
+log_directory_create
 
 # Start log
 log_start_print "BACKUP"
@@ -210,9 +214,10 @@ if ! lock_check_and_set; then
 fi
 
 # Mount devices (if any)
-   ############################################
-   # TODO : Mount devices for usb backend #####
-   ############################################
+mount_devices
+
+# Check directories and create them (if needed)
+directories_create
 
 # Load sources configuration
 if ! source_config_read "$BAK_SOURCES_CONFIG_FILE"; then
@@ -249,10 +254,16 @@ berror=$?
 if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making Server Configuration backup (error = $berror)" >> $BAK_OUTPUT; fi
 if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
 
-# Backup databases
+# Backup MySQL databases
 mysql_databases_backup
 berror=$?
-if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making Databases backup (error = $berror)" >> $BAK_OUTPUT; fi
+if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making MySQL Databases backup (error = $berror)" >> $BAK_OUTPUT; fi
+if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
+
+# Backup PostgreSQL databases
+postgresql_databases_backup
+berror=$?
+if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making PostgreSQL Databases backup (error = $berror)" >> $BAK_OUTPUT; fi
 if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
 
 # Backup sources
@@ -264,6 +275,9 @@ if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
 info_get
 
 old_files_rm $BAK_LOG_PATH $BAK_RM_LOG_OLDER_THAN_DAY
+
+# UnMount devices (if any)
+umount_devices
 
 # End log
 log_end_print "BACKUP"

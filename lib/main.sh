@@ -19,7 +19,7 @@
 ##################################################################
 # BACKUP Constants
 
-BAK_VERSION=0.2-beta
+BAK_VERSION=1.0
 
 BAK_TEMP_DIR=tmp
 BAK_OUTPUT_DIR=out
@@ -41,7 +41,7 @@ BAK_NULL_OUTPUT=/dev/null
 
 ##################################################################
 # BACKUP Lock
-BAK_LOCK=$BAK_TEMP_PATH/.lock
+BAK_LOCK=/var/lock/server_backup.lock
 
 ##################################################################
 # BACKUP Data sources
@@ -63,7 +63,7 @@ fi
 BAK_MAIL_FROM="$BAK_MAIL_COSTUMER - Server-Backup <$BAK_MAIL_FROM_USER>"
 BAK_MAIL_SUBJECT_ERR="[BACKUP] ERROR - $BAK_MAIL_COSTUMER"
 BAK_MAIL_SUBJECT_LOG="[BACKUP] LOG   - $BAK_MAIL_COSTUMER"
-BAK_MAIL_TEMP_FILE=$BAK_TEMP_PATH/$$_last_email.eml
+BAK_MAIL_TEMP_FILE=/tmp/$$_server_backup_last_email.eml
 BAK_MAIL_LAST_FILE=$BAK_PATH/last_email.eml
 
 ##################################################################
@@ -99,6 +99,9 @@ FIND_BIN="$FIND_FILE"
 
 GREP_FILE=/bin/grep
 GREP_BIN="$GREP_FILE"
+
+SU_FILE=/bin/su
+SU_BIN="$SU_FILE -"
 
 DF_FILE=/bin/df
 DF_BIN="$DF_FILE -h"
@@ -142,6 +145,18 @@ MD5SUM_BIN="$MD5SUM_FILE"
 SERVICE_FILE=/usr/sbin/service
 SERVICE_BIN="$SERVICE_FILE"
 
+MOUNT_FILE=/bin/mount
+MOUNT_BIN="$MOUNT_FILE"
+
+UMOUNT_FILE=/bin/umount
+UMOUNT_BIN="$UMOUNT_FILE"
+
+MOUNT_NFS_FILE=/sbin/mount.nfs
+MOUNT_NFS_BIN="$MOUNT_NFS_FILE"
+
+UMOUNT_NFS_FILE=/sbin/umount.nfs
+UMOUNT_NFS_BIN="$UMOUNT_NFS_FILE"
+
 BAK_ENVIRONMENT_LIST=(
    "$TAR_FILE"
    "$RM_FILE"
@@ -151,6 +166,7 @@ BAK_ENVIRONMENT_LIST=(
    "$CAT_FILE"
    "$FIND_FILE"
    "$GREP_FILE"
+   "$SU_FILE"
    "$DF_FILE"
    "$LS_FILE"
    "$DU_FILE"
@@ -164,11 +180,20 @@ BAK_ENVIRONMENT_LIST=(
    "$SED_FILE"
    "$MD5SUM_FILE"
    "$SERVICE_FILE"
+   "$MOUNT_FILE"
+   "$UMOUNT_FILE"
 )
 
 ##################################################################
 # BACKUP Library functions
 
+is_function() {
+   if echo `type $1 2> /dev/null` | $GREP_BIN -q "is a function"; then
+      return 0
+   else
+      return 1
+   fi
+}
 
 ##################################################################
 # old_files_rm
@@ -219,21 +244,26 @@ mysql_databases_backup() {
    $ECHO_BIN >> $BAK_OUTPUT
    $ECHO_BIN "Backup MySQL Databases" >> $BAK_OUTPUT
 
-   if [ $BAK_DATABASE_ENABLED -eq 0 ]; then
+   if [ $BAK_MYSQL_DATABASE_ENABLED -eq 0 ]; then
       $ECHO_BIN "   Disabled by configuration" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   if [ $BAK_MYSQL_DATABASE_ENABLED -eq 2 ]; then
+      $ECHO_BIN "   Disabled because no mysql or mysqldump binaries found" >> $BAK_OUTPUT
       return 0
    fi
 
    if ! mysql_check; then
       # If make backup of MySQL data folder
-      if [ -n "$BAK_DATABASE_DATA_IF_DOWN" ] && [ -d "$BAK_DATABASE_DATA_IF_DOWN" ]; then
+      if [ -n "$BAK_MYSQL_DATABASE_DATA_IF_DOWN" ] && [ -d "$BAK_MYSQL_DATABASE_DATA_IF_DOWN" ]; then
          $ECHO_BIN "   WARNING - MySQL is not running, backup of MySQL files" >> $BAK_OUTPUT
-         mysql_datafiles_backup "$BAK_DATABASE_DATA_IF_DOWN"
+         mysql_datafiles_backup "$BAK_MYSQL_DATABASE_DATA_IF_DOWN"
          return $?
       fi
 
       # If show only a warning
-      if [ $BAK_DATABASE_WARNING_IF_DOWN -eq 1 ]; then
+      if [ $BAK_MYSQL_DATABASE_WARNING_IF_DOWN -eq 1 ]; then
          $ECHO_BIN "   WARNING - MySQL is not running, showing warning only" >> $BAK_OUTPUT
          return 0
       fi
@@ -245,14 +275,14 @@ mysql_databases_backup() {
 
    for i in $(eval $BAK_MYSQL_DATABASE_LIST_CMD);
    do
-      if $(contains "${BAK_DATABASE_DISALLOW[@]}" "$i"); then
+      if $(contains "${BAK_MYSQL_DATABASE_DISALLOW[@]}" "$i"); then
          continue
       fi
 
       $ECHO_BIN -n "   $i ... " >> $BAK_OUTPUT
 
-      if [ $BAK_DATABASE_ALLOW_ALL -eq 1 ] || $(contains "${BAK_DATABASE_ALLOW[@]}" "$i"); then
-         file="$BAK_DATABASE_PATH/${BAK_DATE}-${i}.sql"
+      if [ $BAK_MYSQL_DATABASE_ALLOW_ALL -eq 1 ] || $(contains "${BAK_MYSQL_DATABASE_ALLOW[@]}" "$i"); then
+         file="$BAK_MYSQL_DATABASE_PATH/${BAK_DATE}-${i}.sql"
          if [ $BAK_DEBUG -eq 1 ]; then
             $ECHO_BIN -n "$BAK_MYSQL_DATABASE_BACKUP_CMD $i > '$file' ... " >> $BAK_OUTPUT
          else
@@ -277,7 +307,7 @@ mysql_databases_backup() {
 
    # Process this backup
    if [ $error -eq 0 ]; then
-      backup_process "$BAK_DATABASE_PATH" "${BAK_DATE}-database"
+      backup_process "$BAK_MYSQL_DATABASE_PATH" "${BAK_DATE}-database"
    fi
 
    return $error
@@ -306,6 +336,158 @@ mysql_datafiles_backup() {
       current_date=`$DATE_BIN`
       $ECHO_BIN " START $current_date" >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN " ACTION MySQL data files : $source " >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN " CMD : '$TAR_BIN' : source='$source'" >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
+      file="$BAK_CONFIG_SERVER_PATH/${BAK_DATE}-${name}-backup.tar.bz2"
+      if [ $BAK_DEBUG -eq 1 ]; then
+         $ECHO_BIN -n "$TAR_BIN $TAR_OPTS '$file' '$source' ... " >> $BAK_OUTPUT
+      else
+         $ECHO_BIN " CMD : $TAR_BIN $TAR_OPTS '$file' '$source'" >> $BAK_OUTPUT_EXTENDED
+         $TAR_BIN $TAR_OPTS "$file" "$source" >> $BAK_OUTPUT_EXTENDED 2>&1
+      fi
+      config_error=$?
+      if [ $config_error -eq 0 ];then
+         $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+         $ECHO_BIN " CMD : file_size '$file'" >> $BAK_OUTPUT_EXTENDED
+         size=`file_size $file`
+         $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+         $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
+      else
+         $ECHO_BIN "FAIL (error = $config_error)" >> $BAK_OUTPUT
+         error=1
+      fi
+   else
+      $ECHO_BIN "NOT FOUND" >> $BAK_OUTPUT
+   fi
+
+   # Process this backup
+   if [ $error -eq 0 ]; then
+      backup_process "$BAK_CONFIG_SERVER_PATH" "${BAK_DATE}-mysqlfiles"
+   fi
+
+   return $error
+}
+
+postgresql_check() {
+   $ECHO_BIN -n "PostgreSQL status: " >> $BAK_OUTPUT
+   $ECHO_BIN "- PostgreSQL Status --------------------------------" >> $BAK_OUTPUT_EXTENDED
+   if $POSTGRESQL_LSCLUSTER_BIN | $GREP_BIN 'online' >> $BAK_OUTPUT_EXTENDED 2>&1; then
+      error=0
+      $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+   else
+      error=1
+      $ECHO_BIN -n "FAIL" >> $BAK_OUTPUT
+   fi
+   $ECHO_BIN "-----------------------------------------------" >> $BAK_OUTPUT_EXTENDED
+   $ECHO_BIN " ($error)" >> $BAK_OUTPUT
+   return $error
+}
+
+##################################################################
+# postgresql_databases_backup
+#  Backup PostgreSQL databases
+##################################################################
+postgresql_databases_backup() {
+   local error=0
+   local db_error=0
+   local size=0
+   local file=
+
+   $ECHO_BIN >> $BAK_OUTPUT
+   $ECHO_BIN "Backup PostgreSQL Databases" >> $BAK_OUTPUT
+
+   if [ $BAK_POSTGRESQL_DATABASE_ENABLED -eq 0 ]; then
+      $ECHO_BIN "   Disabled by configuration" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   if [ $BAK_POSTGRESQL_DATABASE_ENABLED -eq 2 ]; then
+      $ECHO_BIN "   Disabled because no psql or pgdump or pg_lscluster binaries found" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   if ! postgresql_check; then
+      # If make backup of PostgreSQL data folder
+      if [ -n "$BAK_POSTGRESQL_DATABASE_DATA_IF_DOWN" ] && [ -d "$BAK_POSTGRESQL_DATABASE_DATA_IF_DOWN" ]; then
+         $ECHO_BIN "   WARNING - PostgreSQL is not running, backup of PostgreSQL files" >> $BAK_OUTPUT
+         postgresql_datafiles_backup "$BAK_POSTGRESQL_DATABASE_DATA_IF_DOWN"
+         return $?
+      fi
+
+      # If show only a warning
+      if [ $BAK_POSTGRESQL_DATABASE_WARNING_IF_DOWN -eq 1 ]; then
+         $ECHO_BIN "   WARNING - PostgreSQL is not running, showing warning only" >> $BAK_OUTPUT
+         return 0
+      fi
+
+      # Else, this is a error to be reported
+      $ECHO_BIN "   FAIL - PostgreSQL is not running" >> $BAK_OUTPUT
+      return 1
+   fi
+
+   for i in $(eval $BAK_POSTGRESQL_DATABASE_LIST_CMD);
+   do
+      if $(contains "${BAK_POSTGRESQL_DATABASE_DISALLOW[@]}" "$i"); then
+         continue
+      fi
+
+      $ECHO_BIN -n "   $i ... " >> $BAK_OUTPUT
+
+      if [ $BAK_POSTGRESQL_DATABASE_ALLOW_ALL -eq 1 ] || $(contains "${BAK_POSTGRESQL_DATABASE_ALLOW[@]}" "$i"); then
+         file="$BAK_POSTGRESQL_DATABASE_PATH/${BAK_DATE}-${i}.sql"
+         if [ $BAK_DEBUG -eq 1 ]; then
+            $ECHO_BIN -n "$BAK_POSTGRESQL_DATABASE_BACKUP_CMD $i > '$file' ... " >> $BAK_OUTPUT
+         else
+            $ECHO_BIN " CMD : $BAK_POSTGRESQL_DATABASE_BACKUP_CMD $i > '$file'" >> $BAK_OUTPUT_EXTENDED
+            $BAK_POSTGRESQL_DATABASE_BACKUP_CMD $i > "$file" 2>> $BAK_OUTPUT_EXTENDED
+         fi
+         db_error=$?
+         if [ $db_error -eq 0 ];then
+            $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+            $ECHO_BIN " CMD : file_size '$file'" >> $BAK_OUTPUT_EXTENDED
+            size=`file_size $file`
+            $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+            $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
+         else
+            $ECHO_BIN "FAIL (error = $db_error)" >> $BAK_OUTPUT
+            error=1
+         fi
+      else
+         $ECHO_BIN "SKIPPED" >> $BAK_OUTPUT
+      fi
+   done
+
+   # Process this backup
+   if [ $error -eq 0 ]; then
+      backup_process "$BAK_POSTGRESQL_DATABASE_PATH" "${BAK_DATE}-database"
+   fi
+
+   return $error
+}
+
+##################################################################
+# postgresql_datafiles_backup "folder"
+#  Backup PostgreSQL data files
+##################################################################
+postgresql_datafiles_backup() {
+   local error=0
+   local config_error=0
+   local name=
+   local index=
+   local source="$1"
+   local file=
+   local size=0
+
+   $ECHO_BIN >> $BAK_OUTPUT
+   $ECHO_BIN "Backup PostgreSQL data files" >> $BAK_OUTPUT
+   name=${source/\//}
+   name=${source//\//_}
+   $ECHO_BIN -n "   '$source' ... " >> $BAK_OUTPUT
+   if [ -e $source ]; then
+      $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
+      current_date=`$DATE_BIN`
+      $ECHO_BIN " START $current_date" >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN " ACTION PostgreSQL data files : $source " >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN " CMD : '$TAR_BIN' : source='$source'" >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
       file="$BAK_CONFIG_SERVER_PATH/${BAK_DATE}-${name}-backup.tar.bz2"
@@ -415,7 +597,7 @@ sources_backup_loop() {
    $ECHO_BIN "Backup Data" >> $BAK_OUTPUT
    for index in `seq 0 1 $((${#BAK_SOURCES_CONFIG_SOURCE[@]} - 1))`; do
       source="${BAK_SOURCES_CONFIG_SOURCE[$index]}"
-      if echo "$source" | grep -q "\$"; then eval source="$source"; fi
+      if echo "$source" | $GREP_BIN -q "\$"; then eval source="$source"; fi
       depth=${BAK_SOURCES_CONFIG_DEPTH[$index]}
       inc=${BAK_SOURCES_CONFIG_INC[$index]}
       target="$BAK_TEMP_PATH"
@@ -591,53 +773,62 @@ backup_process() {
       $ECHO_BIN "OK" >> $BAK_OUTPUT
 
       if [ $error -eq 0 ]; then
-         # Encrypt backup
-         $ECHO_BIN -n "         -> Encrypt backup ... " >> $BAK_OUTPUT
-         encfile="$BAK_OUTPUT_PATH/$name.tar.gz.enc"
-         if [ $BAK_DEBUG -eq 1 ]; then
-            $ECHO_BIN -n "$OPENSSL_ENC_BIN -in '$tarfile' -out '$encfile' ... " >> $BAK_OUTPUT
-         else
-            $ECHO_BIN " CMD : $OPENSSL_ENC_BIN -in '$tarfile' -out '$encfile'" >> $BAK_OUTPUT_EXTENDED
-            $OPENSSL_ENC_BIN -in "$tarfile" -out "$encfile" >> $BAK_OUTPUT_EXTENDED 2>&1
-         fi
-         error=$?
-         if [ $error -eq 0 ]; then
-            $ECHO_BIN -n "OK" >> $BAK_OUTPUT
-            $ECHO_BIN " CMD : file_size '$encfile'" >> $BAK_OUTPUT_EXTENDED
-            size=`file_size $encfile`
-            $ECHO_BIN " ($size)" >> $BAK_OUTPUT
-            $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
-            if [ $BAK_DEBUG -eq 0 ]; then
-               $ECHO_BIN " CMD : $RM_BIN '$tarfile'" >> $BAK_OUTPUT_EXTENDED
-               $RM_BIN "$tarfile" >> $BAK_OUTPUT_EXTENDED 2>&1
+         if [ $BAK_ENCRYPT -eq 1 ]; then
+            # Encrypt backup
+            $ECHO_BIN -n "         -> Encrypt backup ... " >> $BAK_OUTPUT
+            encfile="$BAK_OUTPUT_PATH/$name.tar.gz.enc"
+            if [ $BAK_DEBUG -eq 1 ]; then
+               $ECHO_BIN -n "$OPENSSL_ENC_BIN -in '$tarfile' -out '$encfile' ... " >> $BAK_OUTPUT
+            else
+               $ECHO_BIN " CMD : $OPENSSL_ENC_BIN -in '$tarfile' -out '$encfile'" >> $BAK_OUTPUT_EXTENDED
+               $OPENSSL_ENC_BIN -in "$tarfile" -out "$encfile" >> $BAK_OUTPUT_EXTENDED 2>&1
             fi
+            error=$?
+            if [ $error -eq 0 ]; then
+               $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+               $ECHO_BIN " CMD : file_size '$encfile'" >> $BAK_OUTPUT_EXTENDED
+               size=`file_size $encfile`
+               $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+               $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
+               if [ $BAK_DEBUG -eq 0 ]; then
+                  $ECHO_BIN " CMD : $RM_BIN '$tarfile'" >> $BAK_OUTPUT_EXTENDED
+                  $RM_BIN "$tarfile" >> $BAK_OUTPUT_EXTENDED 2>&1
+               fi
+               file_to_upload="$encfile"
+            else $ECHO_BIN "FAIL (error = $error)" >> $BAK_OUTPUT; fi
+         else
+            encfile="$tarfile"
             file_to_upload="$encfile"
-         else $ECHO_BIN "FAIL (error = $error)" >> $BAK_OUTPUT; fi
+         fi
       fi
 
       if [ $error -eq 0 ]; then
          # Copy to each remote backend
-         $ECHO_BIN -n "         -> Copy to backends ..." >> $BAK_OUTPUT
+         if [ -n "$BAK_REMOTE_BACKENDS" ]; then
+            $ECHO_BIN -n "         -> Copy to backends ..." >> $BAK_OUTPUT
+         fi
          for be in $BAK_REMOTE_BACKENDS; do
-            $ECHO_BIN -n " $be " >> $BAK_OUTPUT
             bef="${be}_put"
-            try=0
-            while [ $try -lt $BAK_BACKEND_MAX_RETRIES ]; do
-               if [ $BAK_DEBUG -eq 1 ]; then
-                  $ECHO_BIN  -n "$bef '$file_to_upload' " >> $BAK_OUTPUT
-               else
-                  $bef "$file_to_upload"
-               fi
-               be_error=$?
-               if [ $be_error -eq 0 ]; then
-                  $ECHO_BIN -n "[OK]" >> $BAK_OUTPUT
-                  break;
-               else
-                  $ECHO_BIN -n "[ERROR = $be_error]" >> $BAK_OUTPUT
-                  try=$((try + 1))
-               fi
-            done
-            if [ $be_error -ne 0 ]; then error=$be_error; fi
+            if is_function $bef; then
+               $ECHO_BIN -n " $be " >> $BAK_OUTPUT
+               try=0
+               while [ $try -lt $BAK_BACKEND_MAX_RETRIES ]; do
+                  if [ $BAK_DEBUG -eq 1 ]; then
+                     $ECHO_BIN  -n "$bef '$file_to_upload' " >> $BAK_OUTPUT
+                  else
+                     $bef "$file_to_upload"
+                  fi
+                  be_error=$?
+                  if [ $be_error -eq 0 ]; then
+                     $ECHO_BIN -n "[OK]" >> $BAK_OUTPUT
+                     break;
+                  else
+                     $ECHO_BIN -n "[ERROR = $be_error]" >> $BAK_OUTPUT
+                     try=$((try + 1))
+                  fi
+               done
+               if [ $be_error -ne 0 ]; then error=$be_error; fi
+            fi
          done
          $ECHO_BIN >> $BAK_OUTPUT
 
@@ -683,11 +874,17 @@ snapshot() {
       return 1
    fi
 
-   # Check directories and create them (if needed)
-   directories_create
+   # Check log directory and create it (if needed)
+   log_directory_create
 
    # Start log
    log_start_print "SNAPSHOT"
+
+   # Mount devices (if any)
+   mount_devices
+
+   # Check directories and create them (if needed)
+   directories_create
 
    # Check lock
    if ! lock_check_and_set; then
@@ -702,10 +899,15 @@ snapshot() {
 
    for backend in $BAK_BACKENDS; do
       bef="${backend}_snapshot"
-      $bef
-      be_error=$?
-      if [ $be_error -ne 0 ]; then error=1; fi
+      if is_function $bef; then
+         $bef
+         be_error=$?
+         if [ $be_error -ne 0 ]; then error=1; fi
+      fi
    done
+
+   # UnMount devices (if any)
+   umount_devices
 
    # End log
    log_end_print "SNAPSHOT"
@@ -903,12 +1105,15 @@ lock_release() {
 # directories_create
 #  Create directories (if needed)
 ##################################################################
-directories_create() {
+log_directory_create() {
    # Create log directory (if needed)
    if [ ! -d "$BAK_LOG_PATH" ]; then
       $ECHO_BIN "INFO : Creating log dir '$BAK_LOG_PATH'"
       $MKDIR_BIN "$BAK_LOG_PATH"
    fi
+}
+
+directories_create() {
 
    # Create tmp directory (if needed)
    if [ ! -d "$BAK_TEMP_PATH" ]; then
@@ -928,10 +1133,16 @@ directories_create() {
       $MKDIR_BIN "$BAK_HISTORICAL_PATH"
    fi
 
-   # Create database directory (if needed)
-   if [ ! -d "$BAK_DATABASE_PATH" ]; then
-      $ECHO_BIN "INFO : Creating database dir '$BAK_DATABASE_PATH'"
-      $MKDIR_BIN "$BAK_DATABASE_PATH"
+   # Create MySQL database directory (if needed)
+   if [ ! -d "$BAK_MYSQL_DATABASE_PATH" ]; then
+      $ECHO_BIN "INFO : Creating MySQL database dir '$BAK_MYSQL_DATABASE_PATH'"
+      $MKDIR_BIN "$BAK_MYSQL_DATABASE_PATH"
+   fi
+
+   # Create PostgreSQL database directory (if needed)
+   if [ ! -d "$BAK_POSTGRESQL_DATABASE_PATH" ]; then
+      $ECHO_BIN "INFO : Creating PostgreSQL database dir '$BAK_POSTGRESQL_DATABASE_PATH'"
+      $MKDIR_BIN "$BAK_POSTGRESQL_DATABASE_PATH"
    fi
 
    # Create server config directory (if needed)
@@ -992,11 +1203,138 @@ dir_size() {
    $ECHO_BIN "$size"
 }
 
+mount_action() {
+   local error=0
+   local merror=0
+   local mtype=
+   local action=$1
+
+   if [ -n "$BAK_MOUNT_POINTS_ENABLED" ]; then
+      for mp in $BAK_MOUNT_POINTS_ENABLED; do
+         $ECHO_BIN -n " $mp ... " >> $BAK_OUTPUT
+         if [ ${BAK_MOUNT_POINTS[$mp,type]+_} ]; then
+            mtype=${BAK_MOUNT_POINTS[$mp,type]}
+            mf="${action}_${mtype}"
+            if is_function $mf; then
+               $mf $mp
+               merror=$?
+               if [ $merror -ne 0 ]; then
+                  $ECHO_BIN " - ERROR ($merror)" >> $BAK_OUTPUT;
+               else
+                  $ECHO_BIN " - OK" >> $BAK_OUTPUT;
+               fi
+            else
+               $ECHO_BIN "ERROR : Mount type '$mtype' is not supported, '$mf' function not found" >> $BAK_OUTPUT
+               merror=1
+            fi
+         else
+            $ECHO_BIN "ERROR : Mount type is not defined" >> $BAK_OUTPUT
+            merror=1
+         fi
+         if [ $merror -ne 0 ]; then error=1; fi
+      done
+   else
+      $ECHO_BIN " No mount points defined" >> $BAK_OUTPUT
+   fi
+
+   return $error
+}
+
+mount_devices() {
+   $ECHO_BIN "Mount devices" >> $BAK_OUTPUT
+   mount_action 'mount'
+   error=$?
+
+   for backend in $BAK_BACKENDS; do
+      bef="${backend}_mount"
+      if is_function $bef; then
+         $bef
+      fi
+   done
+
+   return $error
+}
+
+umount_devices() {
+   $ECHO_BIN "Un-mount devices" >> $BAK_OUTPUT
+
+   for backend in $BAK_BACKENDS; do
+      bef="${backend}_umount"
+      if is_function $bef; then
+         $bef
+      fi
+   done
+
+   mount_action 'umount'
+   return $?
+}
+
+mount_nfs() {
+   local mp=$1
+   local server=
+   local rpath=
+   local lpath=
+
+   # Check mount command exists and executable
+   if [ ! -x "$MOUNT_NFS_FILE" ]; then
+      $ECHO_BIN -n "ERROR : NFS mount binary '$MOUNT_NFS_FILE' not found or not executable" >> $BAK_OUTPUT
+      return 1
+   fi
+
+   server=${BAK_MOUNT_POINTS[$mp,server]}
+   rpath=${BAK_MOUNT_POINTS[$mp,remote]}
+   lpath=${BAK_MOUNT_POINTS[$mp,local]}
+
+   if [ ! -d "$lpath" ]; then
+      $ECHO_BIN -n "ERROR : Local path '$lpath' not found or not a directory" >> $BAK_OUTPUT
+      return 2
+   fi
+
+   if $MOUNT_BIN | $GREP_BIN -q "$lpath"; then
+      $ECHO_BIN -n "WARNING : A device is already mounted at '$lpath'" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   $ECHO_BIN "MOUNT : '$MOUNT_NFS_BIN' '${server}:${rpath}' '${lpath}'" >> $BAK_OUTPUT_EXTENDED
+   "$MOUNT_NFS_BIN" "${server}:${rpath}" "${lpath}" >> $BAK_OUTPUT_EXTENDED 2>&1
+
+   return $?
+}
+
+umount_nfs() {
+   local mp=$1
+   local lpath=
+
+   # Check mount command exists and executable
+   if [ ! -x "$UMOUNT_NFS_FILE" ]; then
+      $ECHO_BIN -n "ERROR : NFS umount binary '$UMOUNT_NFS_FILE' not found or not executable" >> $BAK_OUTPUT
+      return 1
+   fi
+
+   lpath=${BAK_MOUNT_POINTS[$mp,local]}
+
+   if [ ! -d "$lpath" ]; then
+      $ECHO_BIN -n "ERROR : Local path '$lpath' not found or not a directory" >> $BAK_OUTPUT
+      return 2
+   fi
+
+   if ! $MOUNT_BIN | $GREP_BIN -q "$lpath"; then
+      $ECHO_BIN -n "WARNING : Device is not mounted at '$lpath'" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   $ECHO_BIN "UMOUNT : '$UMOUNT_BIN' '${lpath}'" >> $BAK_OUTPUT_EXTENDED
+   "$UMOUNT_BIN" "${lpath}" >> $BAK_OUTPUT_EXTENDED 2>&1
+
+   return 0
+}
+
 environment_check() {
    local index=0
    local error=0
    local be_error=0
    local file=
+   local bef=
 
    for index in `seq 0 1 $((${#BAK_ENVIRONMENT_LIST[@]} - 1))`; do
       file="${BAK_ENVIRONMENT_LIST[$index]}"
@@ -1008,9 +1346,11 @@ environment_check() {
 
    for backend in $BAK_BACKENDS; do
       bef="${backend}_environment_check"
-      $bef
-      be_error=$?
-      if [ $be_error -ne 0 ]; then error=1; fi
+      if is_function $bef; then
+         $bef
+         be_error=$?
+         if [ $be_error -ne 0 ]; then error=1; fi
+      fi
    done
 
    if [ $error -ne 0 ]; then exit $error; fi
@@ -1072,6 +1412,12 @@ config_show() {
 
    license_show
 
+   BAK_OUTPUT=/dev/stdout
+   BAK_OUTPUT_EXTENDED=/dev/null
+
+   # Mount devices (if any)
+   mount_devices
+
    if [ $BAK_ENCRYPT -eq 1 ]; then
       if [ -f "$BAK_ENCRYPT_KEY_FILE" ]; then
          enckey=`cat $BAK_ENCRYPT_KEY_FILE`
@@ -1089,19 +1435,38 @@ config_show() {
       encstatus="OK"
    fi
 
-   if [ $BAK_DATABASE_ENABLED -ne 0 ]; then
+   if [ $BAK_MYSQL_DATABASE_ENABLED -eq 0 ]; then
+      mysql_databases='Disabled by configuration'
+   elif [ $BAK_MYSQL_DATABASE_ENABLED -eq 2 ]; then
+      mysql_databases='Disabled because no mysql or mysqldump binaries found'
+   else
       for i in $(eval $BAK_MYSQL_DATABASE_LIST_CMD);
       do
-         if $(contains "${BAK_DATABASE_DISALLOW[@]}" "$i"); then
+         if $(contains "${BAK_MYSQL_DATABASE_DISALLOW[@]}" "$i"); then
             continue
          fi
-         if [ $BAK_DATABASE_ALLOW_ALL -eq 1 ] || $(contains "${BAK_DATABASE_ALLOW[@]}" "$i"); then
-            if [ -z "$databases" ]; then databases="$i";
-            else databases=`$ECHO_BIN -e "${databases}\n${i}"`; fi
+         if [ $BAK_MYSQL_DATABASE_ALLOW_ALL -eq 1 ] || $(contains "${BAK_MYSQL_DATABASE_ALLOW[@]}" "$i"); then
+            if [ -z "$mysql_databases" ]; then mysql_databases="$i";
+            else mysql_databases=`$ECHO_BIN -e "${mysql_databases}\n${i}"`; fi
          fi
       done
+   fi
+
+   if [ $BAK_POSTGRESQL_DATABASE_ENABLED -eq 0 ]; then
+      postgresql_databases='Disabled by configuration'
+   elif [ $BAK_POSTGRESQL_DATABASE_ENABLED -eq 2 ]; then
+      postgresql_databases='Disabled because no psql or pgdump or pg_lscluster binaries found'
    else
-      databases='Disabled by configuration'
+      for i in $(eval $BAK_POSTGRESQL_DATABASE_LIST_CMD);
+      do
+         if $(contains "${BAK_POSTGRESQL_DATABASE_DISALLOW[@]}" "$i"); then
+            continue
+         fi
+         if [ $BAK_POSTGRESQL_DATABASE_ALLOW_ALL -eq 1 ] || $(contains "${BAK_POSTGRESQL_DATABASE_ALLOW[@]}" "$i"); then
+            if [ -z "$postgresql_databases" ]; then postgresql_databases="$i";
+            else postgresql_databases=`$ECHO_BIN -e "${postgresql_databases}\n${i}"`; fi
+         fi
+      done
    fi
 
    for index in `seq 0 1 $((${#BAK_CONFIG_SERVER_SOURCES[@]} - 1))`; do
@@ -1130,14 +1495,25 @@ config_show() {
       done
    fi
 
+   for backend in $BAK_BACKENDS; do
+      bef="${backend}_snapshot"
+      if is_function $bef; then
+         $bef
+         be_error=$?
+         if [ $be_error -ne 0 ]; then error=1; fi
+      fi
+   done
+
    # Extra configuration, backends
    for backend in $BAK_BACKENDS; do
       bef="${backend}_config_show"
-      config=`$bef`
-      be_error=$?
-      if [ $be_error -ne 0 ]; then error=1; fi
-      if [ -z "$extra" ]; then extra="${config}";
-      else extra=`$ECHO_BIN -e "${extra}\n\n${config}"`; fi
+      if is_function $bef; then
+         config=`$bef`
+         be_error=$?
+         if [ $be_error -ne 0 ]; then error=1; fi
+         if [ -z "$extra" ]; then extra="${config}";
+         else extra=`$ECHO_BIN -e "${extra}\n\n${config}"`; fi
+      fi
    done
 
    if [ $error -eq 0 ]; then
@@ -1170,9 +1546,13 @@ Server configuration:
 -------------------------------------------------
 $server
 
-Databases:
+MySQL Databases:
 -------------------------------------------------
-$databases
+$mysql_databases
+
+PostgreSQL Databases:
+-------------------------------------------------
+$posgresql_databases
 
 Data:
 -------------------------------------------------
@@ -1183,4 +1563,11 @@ $extra
 --> STATUS : $status
 
 CONFIG
+
+   BAK_OUTPUT=/dev/stdout
+   BAK_OUTPUT_EXTENDED=/dev/null
+
+   # UnMount devices (if any)
+   umount_devices
+
 }

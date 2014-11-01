@@ -17,6 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Server-Backup.  If not, see <http://www.gnu.org/licenses/>.
 
+local_check() {
+   return 0
+}
+
 local_config_show() {
    cat << CONFIG
 Local Configuration
@@ -33,6 +37,16 @@ local_snapshot() {
 }
 
 local_environment_check() {
+   # Do nothig
+   return 0
+}
+
+local_mount() {
+   # Do nothig
+   return 0
+}
+
+local_umount() {
    # Do nothig
    return 0
 }

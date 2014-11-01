@@ -122,6 +122,14 @@ s3_environment_check() {
    return 0
 }
 
+s3_mount() {
+   return 0
+}
+
+s3_umount() {
+   return 0
+}
+
 s3_init() {
    local error=0
    local date=
