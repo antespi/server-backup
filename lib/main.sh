@@ -1552,7 +1552,7 @@ $mysql_databases
 
 PostgreSQL Databases:
 -------------------------------------------------
-$posgresql_databases
+$postgresql_databases
 
 Data:
 -------------------------------------------------
