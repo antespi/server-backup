@@ -1487,7 +1487,7 @@ config_show() {
          if [ -d "$path" ]; then status="OK"; else status="NOT FOUND"; error=1; fi
          if [ -z "$data" ]; then data="$path (depth = $depth, inc = $inc) - $status";
          else data=`$ECHO_BIN -e "${data}\n$path (depth = $depth, inc = $inc) - $status"`; fi
-         if [ $depth -gt 0 ]; then
+         if [ "$status" == "OK" ] && [ $depth -gt 0 ]; then
             while IFS= read -r dir; do
                data=`$ECHO_BIN -e "${data}\n   $dir"`
             done < <($FIND_BIN "$path" -maxdepth $depth -mindepth $depth -type d -not -name ".*")
