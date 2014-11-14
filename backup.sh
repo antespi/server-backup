@@ -214,7 +214,6 @@ if ! lock_check_and_set; then
 fi
 
 # Mount devices (if any)
-mount_devices
 if ! mount_devices; then
    $ECHO_BIN >> $BAK_OUTPUT
    $ECHO_BIN "ERROR: Reading mounting devices" >> $BAK_OUTPUT
