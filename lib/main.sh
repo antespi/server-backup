@@ -1245,12 +1245,14 @@ mount_devices() {
    mount_action 'mount'
    error=$?
 
-   for backend in $BAK_BACKENDS; do
-      bef="${backend}_mount"
-      if is_function $bef; then
-         $bef
-      fi
-   done
+   if [ $error -eq 0 ]; then
+      for backend in $BAK_BACKENDS; do
+         bef="${backend}_mount"
+         if is_function $bef; then
+            $bef
+         fi
+      done
+   fi
 
    return $error
 }

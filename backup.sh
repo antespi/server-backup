@@ -215,6 +215,13 @@ fi
 
 # Mount devices (if any)
 mount_devices
+if ! mount_devices; then
+   $ECHO_BIN >> $BAK_OUTPUT
+   $ECHO_BIN "ERROR: Reading mounting devices" >> $BAK_OUTPUT
+   log_end_print "BACKUP"
+   mail_error_send
+   exit 1
+fi
 
 # Check directories and create them (if needed)
 directories_create
