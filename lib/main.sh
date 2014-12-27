@@ -916,6 +916,8 @@ snapshot() {
       fi
    done
 
+   info_get
+
    # UnMount devices (if any)
    umount_devices
 
@@ -1039,7 +1041,7 @@ info_get() {
    $ECHO_BIN >> $BAK_OUTPUT
    $ECHO_BIN    "========================================================" >> $BAK_OUTPUT
    $ECHO_BIN -e " DEVICE         \tTOTAL \tUSED  \tFREE  \tPERCENT" >> $BAK_OUTPUT
-   $ECHO_BIN    "========================================================" >> $BAK_OUTPUT
+   $ECHO_BIN    "--------------------------------------------------------" >> $BAK_OUTPUT
    for index in `seq 0 1 $((${#BAK_LOCAL_INFO_DEVICES[@]} - 1))`; do
       name=`$ECHO_BIN ${BAK_LOCAL_INFO_DEVICES[$index]} | $CUT_BIN -d',' -f1`
       device=`$ECHO_BIN ${BAK_LOCAL_INFO_DEVICES[$index]} | $CUT_BIN -d',' -f2`
@@ -1055,8 +1057,7 @@ info_get() {
    $ECHO_BIN    "--------------------------------------------------------" >> $BAK_OUTPUT
    $IFCONFIG_BIN | $AWK_BIN -F "[: ]+" '/inet addr:/ { if ($4 != "127.0.0.1") print $4 }' >> $BAK_OUTPUT
    $ECHO_BIN    "========================================================" >> $BAK_OUTPUT
-   $ECHO_BIN    " HOSTNAME" >> $BAK_OUTPUT
-   $ECHO_BIN    "--------------------------------------------------------" >> $BAK_OUTPUT
+   $ECHO_BIN .n " HOSTNAME : " >> $BAK_OUTPUT
    $CAT_BIN "$HOSTNAME_FILE" >> $BAK_OUTPUT
    $ECHO_BIN    "========================================================" >> $BAK_OUTPUT
 }
