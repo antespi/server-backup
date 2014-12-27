@@ -53,7 +53,7 @@ BAK_SOURCES_CONFIG_FILE=$BAK_PATH/$BAK_CONFIG_DIR/sources.conf
 
 if [ -z "$BAK_MAIL_FROM_USER" ]; then
    user=`whoami`
-   domain=`cat /etc/mailname`
+   domain=`$CAT_BIN /etc/mailname`
    BAK_MAIL_FROM_USER="${user}@${domain}"
 fi
 if [ -z "$BAK_MAIL_COSTUMER" ]; then
@@ -65,6 +65,8 @@ BAK_MAIL_SUBJECT_ERR="[BACKUP] ERROR - $BAK_MAIL_COSTUMER"
 BAK_MAIL_SUBJECT_LOG="[BACKUP] LOG   - $BAK_MAIL_COSTUMER"
 BAK_MAIL_TEMP_FILE=/tmp/$$_server_backup_last_email.eml
 BAK_MAIL_LAST_FILE=$BAK_PATH/last_email.eml
+
+HOSTNAME_FILE=/etc/hostname
 
 ##################################################################
 # BACKUP Backends
@@ -157,6 +159,12 @@ MOUNT_NFS_BIN="$MOUNT_NFS_FILE"
 UMOUNT_NFS_FILE=/sbin/umount.nfs
 UMOUNT_NFS_BIN="$UMOUNT_NFS_FILE"
 
+IFCONFIG_FILE=/sbin/ifconfig
+IFCONFIG_BIN="$IFCONFIG_FILE"
+
+AWK_FILE=/usr/bin/awk
+AWK_BIN="$AWK_FILE"
+
 BAK_ENVIRONMENT_LIST=(
    "$TAR_FILE"
    "$RM_FILE"
@@ -182,6 +190,8 @@ BAK_ENVIRONMENT_LIST=(
    "$SERVICE_FILE"
    "$MOUNT_FILE"
    "$UMOUNT_FILE"
+   "$IFCONFIG_FILE"
+   "$AWK_FILE"
 )
 
 ##################################################################
@@ -1037,10 +1047,17 @@ info_get() {
       set -- $values
       $ECHO_BIN -e " $name ($device) \t$2 \t$3 \t$4 \t$5" >> $BAK_OUTPUT
    done
-   $ECHO_BIN    "--------------------------------------------------------" >> $BAK_OUTPUT
+   $ECHO_BIN    "========================================================" >> $BAK_OUTPUT
    #########################################
    # TODO : Show info for each backend #####
    #########################################
+   $ECHO_BIN    " IP ADDRESSES" >> $BAK_OUTPUT
+   $ECHO_BIN    "--------------------------------------------------------" >> $BAK_OUTPUT
+   $IFCONFIG_BIN | $AWK_BIN -F "[: ]+" '/inet addr:/ { if ($4 != "127.0.0.1") print $4 }' >> $BAK_OUTPUT
+   $ECHO_BIN    "========================================================" >> $BAK_OUTPUT
+   $ECHO_BIN    " HOSTNAME" >> $BAK_OUTPUT
+   $ECHO_BIN    "--------------------------------------------------------" >> $BAK_OUTPUT
+   $CAT_BIN "$HOSTNAME_FILE" >> $BAK_OUTPUT
    $ECHO_BIN    "========================================================" >> $BAK_OUTPUT
 }
 
@@ -1366,7 +1383,7 @@ executable_set() {
 }
 
 license_show() {
-   cat << LICENSE
+   $CAT_BIN << LICENSE
 Server-Backup v$BAK_VERSION
 Copyright (C) 2012 Antonio Espinosa <aespinosa@teachnova.com> - TeachNova
 This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it GPLv3 license conditions. Read LICENSE.md for more details.
@@ -1381,7 +1398,7 @@ version_show() {
 
 help_show() {
    license_show
-   cat << HELP
+   $CAT_BIN << HELP
 Backup system for Dedicated Servers or EC2 into different backends : S3, LOCAL, FTP, SFTP, USBHD, WEBDAV.
 Also support backup encryption using any algorithm supported by OpenSSL library.
 
@@ -1422,7 +1439,7 @@ config_show() {
 
    if [ $BAK_ENCRYPT -eq 1 ]; then
       if [ -f "$BAK_ENCRYPT_KEY_FILE" ]; then
-         enckey=`cat $BAK_ENCRYPT_KEY_FILE`
+         enckey=`$CAT_BIN $BAK_ENCRYPT_KEY_FILE`
          if [ ${#enckey} -lt 32 ]; then
             encstatus="ERROR : Key file is too short, please set at least a 32 character key"
             error=1
@@ -1524,7 +1541,7 @@ config_show() {
       status="WARNING : Some errors detected, please review your configuration"
    fi
 
-   cat << CONFIG
+   $CAT_BIN << CONFIG
 Paths:
 ------------------------------------------------
 Configuration  : $BAK_CONFIG_PATH
