@@ -1057,7 +1057,7 @@ info_get() {
    $ECHO_BIN    "--------------------------------------------------------" >> $BAK_OUTPUT
    $IFCONFIG_BIN | $AWK_BIN -F "[: ]+" '/inet addr:/ { if ($4 != "127.0.0.1") print $4 }' >> $BAK_OUTPUT
    $ECHO_BIN    "========================================================" >> $BAK_OUTPUT
-   $ECHO_BIN .n " HOSTNAME : " >> $BAK_OUTPUT
+   $ECHO_BIN -n " HOSTNAME : " >> $BAK_OUTPUT
    $CAT_BIN "$HOSTNAME_FILE" >> $BAK_OUTPUT
    $ECHO_BIN    "========================================================" >> $BAK_OUTPUT
 }
