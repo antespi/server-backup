@@ -229,6 +229,7 @@ old_files_rm () {
 mysql_check() {
    $ECHO_BIN -n "MySQL status: " >> $BAK_OUTPUT
    $ECHO_BIN "- MYSQL Status --------------------------------" >> $BAK_OUTPUT_EXTENDED
+   $ECHO_BIN " CMD : $SERVICE_BIN mysql status" >> $BAK_OUTPUT_EXTENDED
    $SERVICE_BIN mysql status >> $BAK_OUTPUT_EXTENDED 2>&1
    error=$?
    $ECHO_BIN "-----------------------------------------------" >> $BAK_OUTPUT_EXTENDED
