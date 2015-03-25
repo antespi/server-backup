@@ -1,5 +1,7 @@
 ### BACKUP
 ##################################################################
+# Add /sbin to PATH in order to support 'exec status' commands
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
 # Mon-Sat at 01:00
 0   1    * * 1-6  root  /root/server-backup/backup.sh &> /root/server-backup/last_backup.log
 # Fri at 22:00
