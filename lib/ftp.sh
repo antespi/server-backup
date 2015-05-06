@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Server-Backup.  If not, see <http://www.gnu.org/licenses/>.
 
-# Not tested !!!!
-
 BAK_FTP_TIMEOUT=3
 BAK_FTP_CMD_BIN='/usr/bin/ncftp'
 BAK_FTP_CONFIG_FILE="$BAK_CONFIG_PATH/.ftpcfg"
