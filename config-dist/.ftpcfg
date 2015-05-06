@@ -1,0 +1,3 @@
+host ftp.example.com
+user your_username
+pass your_password
