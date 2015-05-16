@@ -98,6 +98,8 @@ s3_snapshot() {
 
    $ECHO_BIN "$date" > "$cfile"
    $ECHO_BIN "S3 : Setting new current file : '$date'" >> $BAK_OUTPUT
+   $ECHO_BIN "S3 SNAPSHOT : '$BAK_S3_BASE/$BAK_S3_CURRENT_FILE' <- '$cfile' ($date)" >> $BAK_OUTPUT_EXTENDED
+   $ECHO_BIN " CMD : $BAK_S3_PUT_BIN '$cfile' '$BAK_S3_BASE/$BAK_S3_CURRENT_FILE'" >> $BAK_OUTPUT_EXTENDED
    $BAK_S3_PUT_BIN "$cfile" "$BAK_S3_BASE/$BAK_S3_CURRENT_FILE" > $BAK_NULL_OUTPUT 2>&1
    error=$?
 
@@ -177,11 +179,13 @@ s3_get() {
 
    if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi
 
+   $ECHO_BIN "S3 GET : '$file' <- '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
    if [ -f "$file" ]; then
       $ECHO_BIN " CMD : $BAK_S3_GET_BIN '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name' '$file'" >> $BAK_OUTPUT_EXTENDED
       $BAK_S3_GET_BIN "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name" "$file" >> $BAK_OUTPUT_EXTENDED 2>&1
       error=$?
    else
+      $ECHO_BIN " ERROR: File '$file' not found" >> $BAK_OUTPUT_EXTENDED
       error=1
    fi
    return $error
@@ -198,11 +202,13 @@ s3_put() {
 
    if [ ! $BAK_S3_ERROR -eq 0 ]; then return $BAK_S3_ERROR; fi
 
+   $ECHO_BIN "S3 PUT : '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name' <- '$file'" >> $BAK_OUTPUT_EXTENDED
    if [ -f "$file" ]; then
       $ECHO_BIN " CMD : $BAK_S3_PUT_BIN '$file' '$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
       $BAK_S3_PUT_BIN "$file" "$BAK_S3_BASE/$BAK_S3_CURRENT_PATH/$name"  >> $BAK_OUTPUT_EXTENDED 2>&1
       error=$?
    else
+      $ECHO_BIN " ERROR: File '$file' not found" >> $BAK_OUTPUT_EXTENDED
       error=1
    fi
 

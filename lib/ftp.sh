@@ -99,6 +99,8 @@ ftp_snapshot() {
 
    $ECHO_BIN "$date" > "$cfile"
    $ECHO_BIN "FTP : Setting new current file : '$date'" >> $BAK_OUTPUT
+   $ECHO_BIN "FTP SNAPSHOT : '$BAK_FTP_BASE/' <- '$cfile' ($date)" >> $BAK_OUTPUT_EXTENDED
+   $ECHO_BIN " CMD : $BAK_FTP_PUT_BIN '$BAK_FTP_BASE/' '$cfile'" >> $BAK_OUTPUT_EXTENDED
    $BAK_FTP_PUT_BIN "$BAK_FTP_BASE/" "$cfile"  > $BAK_NULL_OUTPUT 2>&1
    error=$?
 
@@ -182,11 +184,13 @@ ftp_get() {
 
    if [ ! $BAK_FTP_ERROR -eq 0 ]; then return $BAK_FTP_ERROR; fi
 
+   $ECHO_BIN "FTP GET : '$localpath' <- '$BAK_FTP_BASE/$BAK_FTP_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
    if [ -f "$file" ]; then
-      $ECHO_BIN "FTP GET : '$localpath' <- '$BAK_FTP_BASE/$BAK_FTP_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN " CMD : $BAK_FTP_GET_BIN '$localpath' '$BAK_FTP_BASE/$BAK_FTP_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
       $BAK_FTP_GET_BIN "$localpath" "$BAK_FTP_BASE/$BAK_FTP_CURRENT_PATH/$name" > $BAK_NULL_OUTPUT 2>> $BAK_OUTPUT_EXTENDED
       error=$?
    else
+      $ECHO_BIN " ERROR: File '$file' not found" >> $BAK_OUTPUT_EXTENDED
       error=1
    fi
    return $error
@@ -199,11 +203,13 @@ ftp_put() {
 
    if [ ! $BAK_FTP_ERROR -eq 0 ]; then return $BAK_FTP_ERROR; fi
 
+   $ECHO_BIN "FTP PUT : '$BAK_FTP_BASE/$BAK_FTP_CURRENT_PATH/' <- '$file'" >> $BAK_OUTPUT_EXTENDED
    if [ -f "$file" ]; then
-      $ECHO_BIN "FTP PUT : '$BAK_FTP_BASE/$BAK_FTP_CURRENT_PATH/' <- '$file'" >> $BAK_OUTPUT_EXTENDED
+      $ECHO_BIN " CMD : $BAK_FTP_PUT_BIN '$BAK_FTP_BASE/$BAK_FTP_CURRENT_PATH/' '$file'" >> $BAK_OUTPUT_EXTENDED
       $BAK_FTP_PUT_BIN "$BAK_FTP_BASE/$BAK_FTP_CURRENT_PATH/" "$file" > $BAK_NULL_OUTPUT 2>> $BAK_OUTPUT_EXTENDED
       error=$?
    else
+      $ECHO_BIN " ERROR: File '$file' not found" >> $BAK_OUTPUT_EXTENDED
       error=1
    fi
    return $error
