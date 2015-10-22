@@ -665,6 +665,7 @@ source_backup() {
       name=${name//\//_}
       tarfile="$target/${BAK_DATE}-${name}-backup.tar.bz2"
       incfile="${name}-inc-log.dat"
+      incfile=${incfile// /-}
       local_incfile="$BAK_HISTORICAL_PATH/$incfile"
       remote_incfile="$target/$incfile"
 
