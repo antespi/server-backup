@@ -675,7 +675,7 @@ source_backup() {
       $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
 
       if [ $inc -eq 1 ]; then
-         extra="-g $local_incfile"
+         extra="-g \"$local_incfile\""
       fi
 
       if [ $BAK_DEBUG -eq 1 ]; then
