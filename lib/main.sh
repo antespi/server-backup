@@ -51,6 +51,9 @@ BAK_SOURCES_CONFIG_FILE=$BAK_PATH/$BAK_CONFIG_DIR/sources.conf
 ##################################################################
 # BACKUP Email
 
+CAT_FILE=/bin/cat
+CAT_BIN="$CAT_FILE"
+
 if [ -z "$BAK_MAIL_FROM_USER" ]; then
    user=`whoami`
    domain=`$CAT_BIN /etc/mailname`
@@ -92,9 +95,6 @@ CP_BIN="$CP_FILE -a"
 
 MKDIR_FILE=/bin/mkdir
 MKDIR_BIN="$MKDIR_FILE -p"
-
-CAT_FILE=/bin/cat
-CAT_BIN="$CAT_FILE"
 
 FIND_FILE=/usr/bin/find
 FIND_BIN="$FIND_FILE"
