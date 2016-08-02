@@ -35,7 +35,9 @@ ftp_check() {
 
    if [ ! $BAK_FTP_ERROR -eq 0 ]; then return $BAK_FTP_ERROR; fi
 
-   $BAK_FTP_CHECK_BIN -x "quit" ftp://$host > $BAK_NULL_OUTPUT 2>&1
+   $ECHO_BIN "FTP Check" >> $BAK_OUTPUT_EXTENDED
+   $ECHO_BIN " CMD : $BAK_FTP_CHECK_BIN -x 'quit' ftp://$host" >> $BAK_OUTPUT_EXTENDED
+   $BAK_FTP_CHECK_BIN -x "quit" ftp://$host > $BAK_OUTPUT_EXTENDED 2>&1
    return $?
 }
 
