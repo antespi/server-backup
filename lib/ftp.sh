@@ -37,7 +37,7 @@ ftp_check() {
 
    $ECHO_BIN "FTP Check" >> $BAK_OUTPUT_EXTENDED
    $ECHO_BIN " CMD : $BAK_FTP_CHECK_BIN -x 'quit' ftp://$host" >> $BAK_OUTPUT_EXTENDED
-   $BAK_FTP_CHECK_BIN -x "quit" ftp://$host > $BAK_OUTPUT_EXTENDED 2>&1
+   $BAK_FTP_CHECK_BIN -x "quit" ftp://$host >> $BAK_OUTPUT_EXTENDED 2>&1
    return $?
 }
 
