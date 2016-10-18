@@ -68,6 +68,7 @@ BAK_MAIL_SUBJECT_ERR="[BACKUP] ERROR - $BAK_MAIL_COSTUMER"
 BAK_MAIL_SUBJECT_LOG="[BACKUP] LOG   - $BAK_MAIL_COSTUMER"
 BAK_MAIL_TEMP_FILE=/tmp/$$_server_backup_last_email.eml
 BAK_MAIL_LAST_FILE=$BAK_PATH/last_email.eml
+BAK_STATUS_FILE=$BAK_PATH/last_status
 
 HOSTNAME_FILE=/etc/hostname
 
@@ -926,6 +927,9 @@ snapshot() {
    # End log
    log_end_print "SNAPSHOT"
 
+   # Save status for monitoring purposes
+   status_save $error
+
    # Send report email
    if [ $error -eq 0 ]; then
       mail_log_send
@@ -1006,6 +1010,20 @@ mail_send() {
       $CP_BIN $BAK_MAIL_TEMP_FILE $BAK_MAIL_LAST_FILE
       $RM_BIN $BAK_MAIL_TEMP_FILE
    fi
+}
+
+##################################################################
+# status_save
+#  Save status in a file for monitoring purposes
+##################################################################
+status_save() {
+    local error=$1
+    local status="Success"
+    local now=`date +%s`
+    if [ $error -ne 0 ]; then
+        status="Error=$error"
+    fi
+    echo "$BAK_TIMESTAMP;$now;$status" > $BAK_STATUS_FILE
 }
 
 ##################################################################
