@@ -319,7 +319,7 @@ mysql_databases_backup() {
 
    # Process this backup
    if [ $error -eq 0 ]; then
-      backup_process "$BAK_MYSQL_DATABASE_PATH" "${BAK_DATE}-database"
+      backup_process "$BAK_MYSQL_DATABASE_PATH" "${BAK_DATE}-mysql-databases"
    fi
 
    return $error
@@ -471,7 +471,7 @@ postgresql_databases_backup() {
 
    # Process this backup
    if [ $error -eq 0 ]; then
-      backup_process "$BAK_POSTGRESQL_DATABASE_PATH" "${BAK_DATE}-database"
+      backup_process "$BAK_POSTGRESQL_DATABASE_PATH" "${BAK_DATE}-postgresql-databases"
    fi
 
    return $error
