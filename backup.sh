@@ -290,6 +290,9 @@ log_end_print "BACKUP"
 
 # TODO : Copy report to backends
 
+# Save status for monitoring purposes
+status_save $backup_error
+
 # Send report email
 if [ $backup_error -eq 0 ]; then
    mail_log_send
@@ -298,19 +301,3 @@ else
 fi
 
 exit 0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
