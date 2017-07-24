@@ -139,7 +139,7 @@ s3_init() {
 
    if [ -f "$BAK_S3_CONFIG_FILE" ]; then
       $CHMOD_BIN 640 "$BAK_S3_CONFIG_FILE"
-      $CHOWN_BIN root:root "$BAK_S3_CONFIG_FILE"
+      # $CHOWN_BIN root:root "$BAK_S3_CONFIG_FILE"
 
       s3_check
       BAK_S3_ERROR=$?

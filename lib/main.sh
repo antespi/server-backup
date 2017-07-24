@@ -56,16 +56,20 @@ CAT_BIN="$CAT_FILE"
 
 if [ -z "$BAK_MAIL_FROM_USER" ]; then
    user=`whoami`
-   domain=`$CAT_BIN /etc/mailname`
+   if [ -f /etc/mailname ]; then
+      domain=`$CAT_BIN /etc/mailname`
+   else
+      domain=`hostname`
+   fi
    BAK_MAIL_FROM_USER="${user}@${domain}"
 fi
-if [ -z "$BAK_MAIL_COSTUMER" ]; then
-   BAK_MAIL_COSTUMER=`hostname`
+if [ -z "$BAK_MAIL_CUSTOMER" ]; then
+   BAK_MAIL_CUSTOMER=`hostname`
 fi
 
-BAK_MAIL_FROM="$BAK_MAIL_COSTUMER - Server-Backup <$BAK_MAIL_FROM_USER>"
-BAK_MAIL_SUBJECT_ERR="[BACKUP] ERROR - $BAK_MAIL_COSTUMER"
-BAK_MAIL_SUBJECT_LOG="[BACKUP] LOG   - $BAK_MAIL_COSTUMER"
+BAK_MAIL_FROM="$BAK_MAIL_CUSTOMER - Server-Backup <$BAK_MAIL_FROM_USER>"
+BAK_MAIL_SUBJECT_ERR="[BACKUP] ERROR - $BAK_MAIL_CUSTOMER"
+BAK_MAIL_SUBJECT_LOG="[BACKUP] LOG   - $BAK_MAIL_CUSTOMER"
 BAK_MAIL_TEMP_FILE=/tmp/$$_server_backup_last_email.eml
 BAK_MAIL_LAST_FILE=$BAK_PATH/last_email.eml
 
@@ -178,7 +182,6 @@ BAK_ENVIRONMENT_LIST=(
    "$DF_FILE"
    "$LS_FILE"
    "$DU_FILE"
-   "$SENDMAIL_FILE"
    "$OPENSSL_FILE"
    "$ECHO_FILE"
    "$CUT_FILE"
@@ -1383,6 +1386,11 @@ environment_check() {
       fi
    done
 
+   if [ $BAK_SEND_MAIL_ERR -ne 0 ] || [ $BAK_SEND_MAIL_LOG -ne 0 ] && [ ! -x "$SENDMAIL_FILE" ]; then
+      $ECHO_BIN "ERROR : Sendmail checking : '$file' not found or not executable" 2>&1
+      exit 1
+   fi
+
    for backend in $BAK_BACKENDS; do
       bef="${backend}_environment_check"
       if is_function $bef; then
@@ -1446,6 +1454,7 @@ config_show() {
    local index=0
    local server=
    local data=
+   local data_count=0
    local encstatus=
    local status=
 
@@ -1526,10 +1535,15 @@ config_show() {
          if [ -d "$path" ]; then status="OK"; else status="NOT FOUND"; error=1; fi
          if [ -z "$data" ]; then data="$path (depth = $depth, inc = $inc) - $status";
          else data=`$ECHO_BIN -e "${data}\n$path (depth = $depth, inc = $inc) - $status"`; fi
-         if [ "$status" == "OK" ] && [ $depth -gt 0 ]; then
-            while IFS= read -r dir; do
-               data=`$ECHO_BIN -e "${data}\n   $dir"`
-            done < <($FIND_BIN "$path" -maxdepth $depth -mindepth $depth -type d -not -name ".*")
+         if [ "$status" == "OK" ]; then
+            if [ $depth -gt 0 ]; then
+               while IFS= read -r dir; do
+                  data=`$ECHO_BIN -e "${data}\n   $dir"`
+                  data_count=$(( data_count + 1 ))
+               done < <($FIND_BIN "$path" -maxdepth $depth -mindepth $depth -type d -not -name ".*")
+            else
+               data_count=$(( data_count + 1 ))
+            fi
          fi
       done
    fi
@@ -1596,6 +1610,8 @@ $postgresql_databases
 Data:
 -------------------------------------------------
 $data
+------------------
+TOTAL: $data_count items
 
 $extra
 

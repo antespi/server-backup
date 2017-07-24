@@ -32,12 +32,18 @@ ftp_check() {
    local host=`cat $BAK_FTP_CONFIG_FILE | grep host | cut -d' ' -f2`
    local user=`cat $BAK_FTP_CONFIG_FILE | grep user | cut -d' ' -f2`
    local pass=`cat $BAK_FTP_CONFIG_FILE | grep pass | cut -d' ' -f2`
+   local ctx=$1
+   local output=$BAK_OUTPUT_EXTENDED
 
    if [ ! $BAK_FTP_ERROR -eq 0 ]; then return $BAK_FTP_ERROR; fi
 
-   $ECHO_BIN "FTP Check" >> $BAK_OUTPUT_EXTENDED
-   $ECHO_BIN " CMD : $BAK_FTP_CHECK_BIN -x 'quit' ftp://$host" >> $BAK_OUTPUT_EXTENDED
-   $BAK_FTP_CHECK_BIN -x "quit" ftp://$host >> $BAK_OUTPUT_EXTENDED 2>&1
+   if [ "$ctx" == "init" ]; then
+      output=$BAK_NULL_OUTPUT
+   fi
+
+   $ECHO_BIN "FTP Check" >> $output
+   $ECHO_BIN " CMD : $BAK_FTP_CHECK_BIN -x 'quit' ftp://$host" >> $output
+   $BAK_FTP_CHECK_BIN -x "quit" ftp://$host >> $output 2>&1
    return $?
 }
 
@@ -145,9 +151,9 @@ ftp_init() {
 
    if [ -f "$BAK_FTP_CONFIG_FILE" ]; then
       $CHMOD_BIN 640 "$BAK_FTP_CONFIG_FILE"
-      $CHOWN_BIN root:root "$BAK_FTP_CONFIG_FILE"
+      # $CHOWN_BIN $BAK_FTP_LOCAL_USER:$BAK_FTP_LOCAL_GROUP "$BAK_FTP_CONFIG_FILE"
 
-      ftp_check
+      ftp_check 'init'
       BAK_FTP_ERROR=$?
 
       if [ $BAK_FTP_ERROR -eq 0 ]; then

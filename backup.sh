@@ -187,8 +187,10 @@ fi
 # Setup (if needed)
 executable_set "$BAK_PATH/backup.sh"
 
-$CHMOD_BIN 640 "$BAK_CONFIG_PATH/enc.key"
-$CHOWN_BIN root:root "$BAK_CONFIG_PATH/enc.key"
+if [ $BAK_ENCRYPT -ne 0 ]; then
+   $CHMOD_BIN 640 "$BAK_CONFIG_PATH/enc.key"
+   # $CHOWN_BIN root:root "$BAK_CONFIG_PATH/enc.key"
+fi
 
 # Check environment
 environment_check
