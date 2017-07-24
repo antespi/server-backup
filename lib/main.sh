@@ -352,7 +352,7 @@ mysql_datafiles_backup() {
       $ECHO_BIN " ACTION MySQL data files : $source " >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN " CMD : '$TAR_BIN' : source='$source'" >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
-      file="$BAK_CONFIG_SERVER_PATH/${BAK_DATE}-${name}-backup.tar.bz2"
+      file="$BAK_MYSQL_DATABASE_PATH/${BAK_DATE}-${name}-backup.tar.bz2"
       if [ $BAK_DEBUG -eq 1 ]; then
          $ECHO_BIN -n "$TAR_BIN $TAR_OPTS '$file' '$source' ... " >> $BAK_OUTPUT
       else
@@ -376,7 +376,7 @@ mysql_datafiles_backup() {
 
    # Process this backup
    if [ $error -eq 0 ]; then
-      backup_process "$BAK_CONFIG_SERVER_PATH" "${BAK_DATE}-mysqlfiles"
+      backup_process "$BAK_MYSQL_DATABASE_PATH" "${BAK_DATE}-mysql-files"
    fi
 
    return $error
@@ -504,7 +504,7 @@ postgresql_datafiles_backup() {
       $ECHO_BIN " ACTION PostgreSQL data files : $source " >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN " CMD : '$TAR_BIN' : source='$source'" >> $BAK_OUTPUT_EXTENDED
       $ECHO_BIN "-------------------------------------------------------------" >> $BAK_OUTPUT_EXTENDED
-      file="$BAK_CONFIG_SERVER_PATH/${BAK_DATE}-${name}-backup.tar.bz2"
+      file="$BAK_POSTGRESQL_DATABASE_PATH/${BAK_DATE}-${name}-backup.tar.bz2"
       if [ $BAK_DEBUG -eq 1 ]; then
          $ECHO_BIN -n "$TAR_BIN $TAR_OPTS '$file' '$source' ... " >> $BAK_OUTPUT
       else
@@ -528,7 +528,7 @@ postgresql_datafiles_backup() {
 
    # Process this backup
    if [ $error -eq 0 ]; then
-      backup_process "$BAK_CONFIG_SERVER_PATH" "${BAK_DATE}-mysqlfiles"
+      backup_process "$BAK_POSTGRESQL_DATABASE_PATH" "${BAK_DATE}-postgresql-files"
    fi
 
    return $error
@@ -549,6 +549,12 @@ server_configuration_backup() {
 
    $ECHO_BIN >> $BAK_OUTPUT
    $ECHO_BIN "Backup Server configuration" >> $BAK_OUTPUT
+
+   if [ $BAK_CONFIG_ENABLED -eq 0 ]; then
+      $ECHO_BIN "   Disabled by configuration" >> $BAK_OUTPUT
+      return 0
+   fi
+
    for index in `seq 0 1 $((${#BAK_CONFIG_SERVER_SOURCES[@]} - 1))`; do
       source="${BAK_CONFIG_SERVER_SOURCES[$index]}"
       name=${source/\//}
@@ -579,9 +585,9 @@ server_configuration_backup() {
             $ECHO_BIN "FAIL (error = $config_error)" >> $BAK_OUTPUT
             error=1
          fi
-     else
-        $ECHO_BIN "NOT FOUND" >> $BAK_OUTPUT
-     fi
+      else
+         $ECHO_BIN "NOT FOUND" >> $BAK_OUTPUT
+      fi
    done
 
    # Process this backup
@@ -1174,19 +1180,19 @@ directories_create() {
    fi
 
    # Create MySQL database directory (if needed)
-   if [ ! -d "$BAK_MYSQL_DATABASE_PATH" ]; then
+   if [ $BAK_MYSQL_DATABASE_ENABLED -ne 0 ] && [ ! -d "$BAK_MYSQL_DATABASE_PATH" ]; then
       $ECHO_BIN "INFO : Creating MySQL database dir '$BAK_MYSQL_DATABASE_PATH'"
       $MKDIR_BIN "$BAK_MYSQL_DATABASE_PATH"
    fi
 
    # Create PostgreSQL database directory (if needed)
-   if [ ! -d "$BAK_POSTGRESQL_DATABASE_PATH" ]; then
+   if [ $BAK_POSTGRESQL_DATABASE_ENABLED -ne 0 ] && [ ! -d "$BAK_POSTGRESQL_DATABASE_PATH" ]; then
       $ECHO_BIN "INFO : Creating PostgreSQL database dir '$BAK_POSTGRESQL_DATABASE_PATH'"
       $MKDIR_BIN "$BAK_POSTGRESQL_DATABASE_PATH"
    fi
 
    # Create server config directory (if needed)
-   if [ ! -d "$BAK_CONFIG_SERVER_PATH" ]; then
+   if [ $BAK_CONFIG_ENABLED -ne 0 ] && [ ! -d "$BAK_CONFIG_SERVER_PATH" ]; then
       $ECHO_BIN "INFO : Creating server config dir '$BAK_CONFIG_SERVER_PATH'"
       $MKDIR_BIN "$BAK_CONFIG_SERVER_PATH"
    fi
@@ -1517,12 +1523,16 @@ config_show() {
       done
    fi
 
-   for index in `seq 0 1 $((${#BAK_CONFIG_SERVER_SOURCES[@]} - 1))`; do
-      path="${BAK_CONFIG_SERVER_SOURCES[$index]}"
-      if [ -d "$path" ]; then status="OK"; else status="NOT FOUND"; error=1; fi
-      if [ -z "$server" ]; then server="$path - $status";
-      else server=`$ECHO_BIN -e "${server}\n$path - $status"`; fi
-   done
+   if [ $BAK_CONFIG_ENABLED -eq 0 ]; then
+      server='Disabled by configuration'
+   else
+      for index in `seq 0 1 $((${#BAK_CONFIG_SERVER_SOURCES[@]} - 1))`; do
+         path="${BAK_CONFIG_SERVER_SOURCES[$index]}"
+         if [ -d "$path" ]; then status="OK"; else status="NOT FOUND"; error=1; fi
+         if [ -z "$server" ]; then server="$path - $status";
+         else server=`$ECHO_BIN -e "${server}\n$path - $status"`; fi
+      done
+   fi
 
    if ! source_config_read "$BAK_SOURCES_CONFIG_FILE"; then
       data="ERROR: Reading configuration (config file = $BAK_SOURCES_CONFIG_FILE)"
