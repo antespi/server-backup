@@ -6,6 +6,7 @@
 # See gitignore(5) man page for more details
 #
 /config/
+/data/
 /sample/
 /lib/s3/aws-php/config.inc.php
 /log/
