@@ -109,7 +109,7 @@ sftp_snapshot() {
    $ECHO_BIN "SFTP SNAPSHOT : '$BAK_SFTP_BASE/' <- '$cfile' ($date)" >> $BAK_OUTPUT_EXTENDED
    $ECHO_BIN " CMD : $BAK_SFTP_BIN '$cfile'" >> $BAK_OUTPUT_EXTENDED
    for host in $BAK_SFTP_HOSTS; do
-       $ECHO_BIN "sftp> connecting to '$host'" >> $BAK_OUTPUT_EXTENDED
+       $ECHO_BIN "SFTP : Connecting to '$host'" >> $BAK_OUTPUT_EXTENDED
        $BAK_SFTP_BIN ${BAK_SFTP_USER}@${host} << EOL >> $BAK_OUTPUT_EXTENDED 2>&1
 cd "$BAK_SFTP_BASE"
 put "$cfile"
@@ -243,7 +243,7 @@ sftp_get() {
    if [ -f "$file" ]; then
       $ECHO_BIN " CMD : $BAK_SFTP_BIN '$localpath' '$BAK_SFTP_BASE/$BAK_SFTP_CURRENT_PATH/$name'" >> $BAK_OUTPUT_EXTENDED
       for host in $BAK_SFTP_HOSTS; do
-         $ECHO_BIN "sftp> connecting to '$host'" >> $BAK_OUTPUT_EXTENDED
+         $ECHO_BIN "SFTP : Connecting to '$host'" >> $BAK_OUTPUT_EXTENDED
          $BAK_SFTP_BIN ${BAK_SFTP_USER}@${host} << EOL >> $BAK_OUTPUT_EXTENDED 2>&1
 lcd "$localpath"
 cd "$BAK_SFTP_BASE/$BAK_SFTP_CURRENT_PATH"
@@ -270,7 +270,7 @@ sftp_put() {
    if [ -f "$file" ]; then
       $ECHO_BIN " CMD : $BAK_SFTP_BIN '$BAK_SFTP_BASE/$BAK_SFTP_CURRENT_PATH/' '$file'" >> $BAK_OUTPUT_EXTENDED
       for host in $BAK_SFTP_HOSTS; do
-         $ECHO_BIN "sftp> connecting to '$host'" >> $BAK_OUTPUT_EXTENDED
+         $ECHO_BIN "SFTP : Connecting to '$host'" >> $BAK_OUTPUT_EXTENDED
          $BAK_SFTP_BIN ${BAK_SFTP_USER}@${host} << EOL >> $BAK_OUTPUT_EXTENDED 2>&1
 cd "$BAK_SFTP_BASE/$BAK_SFTP_CURRENT_PATH"
 put "$file"
