@@ -615,6 +615,12 @@ sources_backup_loop() {
 
    $ECHO_BIN >> $BAK_OUTPUT
    $ECHO_BIN "Backup Data" >> $BAK_OUTPUT
+
+   if [ ! -f $BAK_SOURCES_CONFIG_FILE ]; then
+      $ECHO_BIN "   Disabled by configuration" >> $BAK_OUTPUT
+      return 0
+   fi
+
    for index in `seq 0 1 $((${#BAK_SOURCES_CONFIG_SOURCE[@]} - 1))`; do
       source="${BAK_SOURCES_CONFIG_SOURCE[$index]}"
       if echo "$source" | $GREP_BIN -q "\$"; then eval source="$source"; fi
@@ -1534,38 +1540,43 @@ config_show() {
       done
    fi
 
-   if ! source_config_read "$BAK_SOURCES_CONFIG_FILE"; then
-      data="ERROR: Reading configuration (config file = $BAK_SOURCES_CONFIG_FILE)"
-   else
-      for index in `seq 0 1 $((${#BAK_SOURCES_CONFIG_SOURCE[@]} - 1))`; do
-         path="${BAK_SOURCES_CONFIG_SOURCE[$index]}"
-         if echo "$path" | grep -q "\$"; then eval path="$path"; fi
-         depth=${BAK_SOURCES_CONFIG_DEPTH[$index]}
-         inc=${BAK_SOURCES_CONFIG_INC[$index]}
-         if [ -d "$path" ]; then status="OK"; else status="NOT FOUND"; error=1; fi
-         if [ -z "$data" ]; then data="$path (depth = $depth, inc = $inc) - $status";
-         else data=`$ECHO_BIN -e "${data}\n$path (depth = $depth, inc = $inc) - $status"`; fi
-         if [ "$status" == "OK" ]; then
-            if [ $depth -gt 0 ]; then
-               while IFS= read -r dir; do
-                  data=`$ECHO_BIN -e "${data}\n   $dir"`
+   if [ -f $BAK_SOURCES_CONFIG_FILE ]; then
+      if ! source_config_read "$BAK_SOURCES_CONFIG_FILE"; then
+         data="ERROR: Reading configuration (config file = $BAK_SOURCES_CONFIG_FILE)"
+      else
+         for index in `seq 0 1 $((${#BAK_SOURCES_CONFIG_SOURCE[@]} - 1))`; do
+            path="${BAK_SOURCES_CONFIG_SOURCE[$index]}"
+            if echo "$path" | grep -q "\$"; then eval path="$path"; fi
+            depth=${BAK_SOURCES_CONFIG_DEPTH[$index]}
+            inc=${BAK_SOURCES_CONFIG_INC[$index]}
+            if [ -d "$path" ]; then status="OK"; else status="NOT FOUND"; error=1; fi
+            if [ -z "$data" ]; then data="$path (depth = $depth, inc = $inc) - $status";
+            else data=`$ECHO_BIN -e "${data}\n$path (depth = $depth, inc = $inc) - $status"`; fi
+            if [ "$status" == "OK" ]; then
+               if [ $depth -gt 0 ]; then
+                  while IFS= read -r dir; do
+                     data=`$ECHO_BIN -e "${data}\n   $dir"`
+                     data_count=$(( data_count + 1 ))
+                  done < <($FIND_BIN "$path" -maxdepth $depth -mindepth $depth -type d -not -name ".*")
+               else
                   data_count=$(( data_count + 1 ))
-               done < <($FIND_BIN "$path" -maxdepth $depth -mindepth $depth -type d -not -name ".*")
-            else
-               data_count=$(( data_count + 1 ))
+               fi
             fi
-         fi
-      done
+         done
+      fi
+   else
+      data="Disabled, '$BAK_SOURCES_CONFIG_FILE' file not found"
    fi
 
-   for backend in $BAK_BACKENDS; do
-      bef="${backend}_snapshot"
-      if is_function $bef; then
-         $bef
-         be_error=$?
-         if [ $be_error -ne 0 ]; then error=1; fi
-      fi
-   done
+   # AEA: Make folder initialization at ${backend}_init method
+   # for backend in $BAK_BACKENDS; do
+   #    bef="${backend}_snapshot"
+   #    if is_function $bef; then
+   #       $bef
+   #       be_error=$?
+   #       if [ $be_error -ne 0 ]; then error=1; fi
+   #    fi
+   # done
 
    # Extra configuration, backends
    for backend in $BAK_BACKENDS; do

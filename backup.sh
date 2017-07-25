@@ -228,7 +228,7 @@ fi
 directories_create
 
 # Load sources configuration
-if ! source_config_read "$BAK_SOURCES_CONFIG_FILE"; then
+if [ -f $BAK_SOURCES_CONFIG_FILE ] && ! source_config_read "$BAK_SOURCES_CONFIG_FILE"; then
    $ECHO_BIN >> $BAK_OUTPUT
    $ECHO_BIN "ERROR: Reading configuration (config file = $BAK_SOURCES_CONFIG_FILE)" >> $BAK_OUTPUT
    log_end_print "BACKUP"
