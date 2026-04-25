@@ -17,3 +17,4 @@ last_snapshot.log
 *.sublime-project
 *.sublime-workspace
 .s3.cfg
+/tests/tmp/
