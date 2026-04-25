@@ -77,6 +77,11 @@ BAK_POSTGRESQL_DATABASE_ENABLED=0
 BAK_POSTGRESQL_DATABASE_WARNING_IF_DOWN=0
 BAK_POSTGRESQL_DATABASE_ALLOW_ALL=1
 
+BAK_POSTGRESQL_CONTAINERS_ENABLED=0
+BAK_POSTGRESQL_CONTAINERS_WARNING_IF_DOWN=0
+BAK_POSTGRESQL_CONTAINERS_ALLOW_ALL=1
+BAK_POSTGRESQL_CONTAINERS=()
+
 ### Configuration ##################################################
 
 BAK_CONFIG_GENERAL_FILE="$BAK_CONFIG_PATH/general.conf"
@@ -268,6 +273,12 @@ if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
 postgresql_databases_backup
 berror=$?
 if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making PostgreSQL Databases backup (error = $berror)" >> $BAK_OUTPUT; fi
+if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
+
+# Backup PostgreSQL databases inside Docker containers
+postgresql_containers_backup
+berror=$?
+if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making PostgreSQL Containers Databases backup (error = $berror)" >> $BAK_OUTPUT; fi
 if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
 
 # Backup sources

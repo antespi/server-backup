@@ -535,6 +535,115 @@ postgresql_datafiles_backup() {
 }
 
 ##################################################################
+# postgresql_container_check <container>
+#  Return 0 if the named docker container is running, 1 otherwise
+##################################################################
+postgresql_container_check() {
+   local container=$1
+   local error=0
+   local state=
+
+   $ECHO_BIN -n "PostgreSQL container '$container' status: " >> $BAK_OUTPUT
+   $ECHO_BIN "- PostgreSQL container '$container' Status -----------" >> $BAK_OUTPUT_EXTENDED
+   state=$($DOCKER_BIN inspect -f '{{.State.Running}}' "$container" 2>> $BAK_OUTPUT_EXTENDED)
+   if [ "$state" == "true" ]; then
+      error=0
+      $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+   else
+      error=1
+      $ECHO_BIN -n "FAIL" >> $BAK_OUTPUT
+   fi
+   $ECHO_BIN "-----------------------------------------------" >> $BAK_OUTPUT_EXTENDED
+   $ECHO_BIN " ($error)" >> $BAK_OUTPUT
+   return $error
+}
+
+##################################################################
+# postgresql_containers_backup
+#  Backup PostgreSQL databases that live inside Docker containers
+##################################################################
+postgresql_containers_backup() {
+   local error=0
+   local db_error=0
+   local size=0
+   local file=
+   local container=
+   local i=
+
+   $ECHO_BIN >> $BAK_OUTPUT
+   $ECHO_BIN "Backup PostgreSQL Containers Databases" >> $BAK_OUTPUT
+
+   if [ $BAK_POSTGRESQL_CONTAINERS_ENABLED -eq 0 ]; then
+      $ECHO_BIN "   Disabled by configuration" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   if [ $BAK_POSTGRESQL_CONTAINERS_ENABLED -eq 2 ]; then
+      $ECHO_BIN "   Disabled because no docker binary found" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   if [ ${#BAK_POSTGRESQL_CONTAINERS[@]} -eq 0 ]; then
+      $ECHO_BIN "   No containers configured (BAK_POSTGRESQL_CONTAINERS empty)" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   for container in "${BAK_POSTGRESQL_CONTAINERS[@]}"; do
+      $ECHO_BIN >> $BAK_OUTPUT
+      $ECHO_BIN "   Container: $container" >> $BAK_OUTPUT
+
+      if ! postgresql_container_check "$container"; then
+         if [ $BAK_POSTGRESQL_CONTAINERS_WARNING_IF_DOWN -eq 1 ]; then
+            $ECHO_BIN "   WARNING - Container '$container' is not running, skipping" >> $BAK_OUTPUT
+            continue
+         fi
+         $ECHO_BIN "   FAIL - Container '$container' is not running" >> $BAK_OUTPUT
+         error=1
+         continue
+      fi
+
+      for i in $($BAK_POSTGRESQL_CONTAINERS_LIST_CMD "$container");
+      do
+         if $(contains "${BAK_POSTGRESQL_CONTAINERS_DISALLOW[@]}" "$i"); then
+            continue
+         fi
+
+         $ECHO_BIN -n "      $i ... " >> $BAK_OUTPUT
+
+         if [ $BAK_POSTGRESQL_CONTAINERS_ALLOW_ALL -eq 1 ] || $(contains "${BAK_POSTGRESQL_CONTAINERS_ALLOW[@]}" "$i"); then
+            file="$BAK_POSTGRESQL_CONTAINERS_PATH/${BAK_DATE}-${container}-${i}.sql"
+            if [ $BAK_DEBUG -eq 1 ]; then
+               $ECHO_BIN -n "$BAK_POSTGRESQL_CONTAINERS_BACKUP_CMD $container $i > '$file' ... " >> $BAK_OUTPUT
+            else
+               $ECHO_BIN " CMD : $BAK_POSTGRESQL_CONTAINERS_BACKUP_CMD $container $i > '$file'" >> $BAK_OUTPUT_EXTENDED
+               $BAK_POSTGRESQL_CONTAINERS_BACKUP_CMD "$container" "$i" > "$file" 2>> $BAK_OUTPUT_EXTENDED
+            fi
+            db_error=$?
+            if [ $db_error -eq 0 ]; then
+               $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+               $ECHO_BIN " CMD : file_size '$file'" >> $BAK_OUTPUT_EXTENDED
+               size=`file_size $file`
+               $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+               $ECHO_BIN " SIZE : $size" >> $BAK_OUTPUT_EXTENDED
+            else
+               $ECHO_BIN "FAIL (error = $db_error)" >> $BAK_OUTPUT
+               error=1
+            fi
+         else
+            $ECHO_BIN "SKIPPED" >> $BAK_OUTPUT
+         fi
+      done
+   done
+
+   # Process this backup
+   if [ $error -eq 0 ]; then
+      backup_process "$BAK_POSTGRESQL_CONTAINERS_PATH" "${BAK_DATE}-postgresql-containers"
+   fi
+
+   return $error
+}
+
+##################################################################
 # server_configuration_backup
 #  Backup server configuration files
 ##################################################################
@@ -1197,6 +1306,12 @@ directories_create() {
       $MKDIR_BIN "$BAK_POSTGRESQL_DATABASE_PATH"
    fi
 
+   # Create PostgreSQL containers database directory (if needed)
+   if [ $BAK_POSTGRESQL_CONTAINERS_ENABLED -ne 0 ] && [ ! -d "$BAK_POSTGRESQL_CONTAINERS_PATH" ]; then
+      $ECHO_BIN "INFO : Creating PostgreSQL containers database dir '$BAK_POSTGRESQL_CONTAINERS_PATH'"
+      $MKDIR_BIN "$BAK_POSTGRESQL_CONTAINERS_PATH"
+   fi
+
    # Create server config directory (if needed)
    if [ $BAK_CONFIG_ENABLED -ne 0 ] && [ ! -d "$BAK_CONFIG_SERVER_PATH" ]; then
       $ECHO_BIN "INFO : Creating server config dir '$BAK_CONFIG_SERVER_PATH'"
@@ -1529,6 +1644,19 @@ config_show() {
       done
    fi
 
+   if [ $BAK_POSTGRESQL_CONTAINERS_ENABLED -eq 0 ]; then
+      postgresql_containers='Disabled by configuration'
+   elif [ $BAK_POSTGRESQL_CONTAINERS_ENABLED -eq 2 ]; then
+      postgresql_containers='Disabled because no docker binary found'
+   elif [ ${#BAK_POSTGRESQL_CONTAINERS[@]} -eq 0 ]; then
+      postgresql_containers='No containers configured'
+   else
+      for container in "${BAK_POSTGRESQL_CONTAINERS[@]}"; do
+         if [ -z "$postgresql_containers" ]; then postgresql_containers="$container";
+         else postgresql_containers=`$ECHO_BIN -e "${postgresql_containers}\n${container}"`; fi
+      done
+   fi
+
    if [ $BAK_CONFIG_ENABLED -eq 0 ]; then
       server='Disabled by configuration'
    else
@@ -1627,6 +1755,10 @@ $mysql_databases
 PostgreSQL Databases:
 -------------------------------------------------
 $postgresql_databases
+
+PostgreSQL Containers:
+-------------------------------------------------
+$postgresql_containers
 
 Data:
 -------------------------------------------------
