@@ -651,6 +651,30 @@ postgresql_docker_databases_backup() {
 }
 
 ##################################################################
+# postgresql_docker_databases_list
+#  Print "container/db" pairs that would be backed up. Used by the
+#  end-of-run report.
+##################################################################
+postgresql_docker_databases_list() {
+   if [ "${BAK_POSTGRESQL_DOCKER_ENABLED:-0}" -ne 1 ]; then
+      return 0
+   fi
+   local container=
+   local db=
+   for container in "${BAK_POSTGRESQL_DOCKER_CONTAINERS[@]}"; do
+      for db in $(postgresql_docker_list_databases "$container"); do
+         if $(contains "${BAK_POSTGRESQL_DATABASE_DISALLOW[@]}" "$db"); then
+            continue
+         fi
+         if [ "${BAK_POSTGRESQL_DATABASE_ALLOW_ALL}" -eq 1 ] \
+            || $(contains "${BAK_POSTGRESQL_DATABASE_ALLOW[@]}" "$db"); then
+            $ECHO_BIN "${container}/${db}"
+         fi
+      done
+   done
+}
+
+##################################################################
 # server_configuration_backup
 #  Backup server configuration files
 ##################################################################
@@ -1645,6 +1669,11 @@ config_show() {
       done
    fi
 
+   postgresql_docker_databases=$(postgresql_docker_databases_list)
+   if [ -z "$postgresql_docker_databases" ]; then
+      postgresql_docker_databases='None'
+   fi
+
    if [ $BAK_CONFIG_ENABLED -eq 0 ]; then
       server='Disabled by configuration'
    else
@@ -1743,6 +1772,10 @@ $mysql_databases
 PostgreSQL Databases:
 -------------------------------------------------
 $postgresql_databases
+
+PostgreSQL Docker Databases:
+============================
+$postgresql_docker_databases
 
 Data:
 -------------------------------------------------

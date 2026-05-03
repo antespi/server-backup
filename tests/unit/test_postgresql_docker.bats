@@ -202,3 +202,19 @@ EOS
    assert_file_exists "${BAK_POSTGRESQL_DATABASE_PATH}/${BAK_DATE}-pg1-app.sql"
    assert_file_exists "${BAK_POSTGRESQL_DATABASE_PATH}/${BAK_DATE}-pg2-app.sql"
 }
+
+@test "report builder: includes container/db pairs in postgresql_docker_databases" {
+   BAK_POSTGRESQL_DOCKER_ENABLED=1
+   BAK_POSTGRESQL_DOCKER_CONTAINERS=("pg1")
+   BAK_POSTGRESQL_DATABASE_ALLOW_ALL=1
+   BAK_POSTGRESQL_DATABASE_DISALLOW=("skipme")
+   DOCKER_BIN="$(make_docker_running_stub)"
+
+   # The report variable is built inline near line 1515; we just need
+   # the helper that produces the listing.
+   run postgresql_docker_databases_list
+   assert_success
+   assert_output --partial "pg1/app"
+   assert_output --partial "pg1/allowed"
+   refute_output --partial "pg1/skipme"
+}
