@@ -266,6 +266,7 @@ if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
 
 # Backup PostgreSQL databases
 postgresql_databases_backup
+postgresql_docker_databases_backup
 berror=$?
 if [ $berror -ne 0 ]; then $ECHO_BIN "ERROR : Making PostgreSQL Databases backup (error = $berror)" >> $BAK_OUTPUT; fi
 if [ $backup_error -eq 0 ]; then backup_error=$berror; fi
