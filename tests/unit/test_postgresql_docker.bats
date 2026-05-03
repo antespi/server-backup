@@ -61,3 +61,25 @@ Owner|postgres"
    assert_output --partial "app"
    assert_output --partial "otherdb"
 }
+
+# ---- postgresql_docker_dump ----
+
+@test "postgresql_docker_dump: passes container and db to docker exec, prints SQL" {
+   # Stub records its argv to a sentinel file and prints the dump body.
+   local args_file="${TEST_TMP}/docker_args"
+   local stub="${TEST_TMP}/docker_stub.sh"
+   cat > "$stub" <<EOS
+#!/bin/bash
+echo "\$@" > "$args_file"
+echo "-- SQL DUMP --"
+EOS
+   chmod +x "$stub"
+   DOCKER_BIN="$stub"
+
+   run postgresql_docker_dump pg1 mydb
+   assert_success
+   assert_output --partial "-- SQL DUMP --"
+
+   run cat "$args_file"
+   assert_output "exec -u postgres pg1 pg_dump -Fp mydb"
+}

@@ -563,6 +563,16 @@ postgresql_docker_list_databases() {
 }
 
 ##################################################################
+# postgresql_docker_dump "container" "database"
+#  Emit a plain-format SQL dump of <database> on stdout.
+##################################################################
+postgresql_docker_dump() {
+   local container="$1"
+   local database="$2"
+   $DOCKER_BIN exec -u postgres "$container" pg_dump -Fp "$database"
+}
+
+##################################################################
 # server_configuration_backup
 #  Backup server configuration files
 ##################################################################
