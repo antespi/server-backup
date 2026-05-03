@@ -38,6 +38,15 @@ load_main_lib() {
    export GREP_BIN="grep"
    export CUT_BIN="cut"
    export DATE_BIN="date"
+
+   # PostgreSQL prefix (host) + docker defaults so postgresql_databases_backup
+   # and postgresql_docker_databases_backup can be exercised by tests.
+   export BAK_POSTGRESQL_DATABASE_PREFIX="host"
+   export BAK_POSTGRESQL_DOCKER_ENABLED=0
+   export BAK_POSTGRESQL_DOCKER_CONTAINERS=()
+   export BAK_POSTGRESQL_DOCKER_WARNING_IF_DOWN=0
+   export BAK_POSTGRESQL_DOCKER_USER="postgres"
+   export DOCKER_BIN="docker"
 }
 
 # Read $BAK_OUTPUT content for assertion.

@@ -448,7 +448,7 @@ postgresql_databases_backup() {
       $ECHO_BIN -n "   $i ... " >> $BAK_OUTPUT
 
       if [ $BAK_POSTGRESQL_DATABASE_ALLOW_ALL -eq 1 ] || $(contains "${BAK_POSTGRESQL_DATABASE_ALLOW[@]}" "$i"); then
-         file="$BAK_POSTGRESQL_DATABASE_PATH/${BAK_DATE}-${i}.sql"
+         file="$BAK_POSTGRESQL_DATABASE_PATH/${BAK_DATE}-${BAK_POSTGRESQL_DATABASE_PREFIX}-${i}.sql"
          if [ $BAK_DEBUG -eq 1 ]; then
             $ECHO_BIN -n "$BAK_POSTGRESQL_DATABASE_BACKUP_CMD $i > '$file' ... " >> $BAK_OUTPUT
          else
@@ -532,6 +532,146 @@ postgresql_datafiles_backup() {
    fi
 
    return $error
+}
+
+##################################################################
+# postgresql_docker_check "container"
+#  Return 0 if the container is running, 1 otherwise.
+##################################################################
+postgresql_docker_check() {
+   local container="$1"
+   local state=
+   $ECHO_BIN -n "PostgreSQL Docker '$container' status: " >> $BAK_OUTPUT
+   $ECHO_BIN "- PostgreSQL Docker '$container' Status -----------------" >> $BAK_OUTPUT_EXTENDED
+   state=$($DOCKER_BIN inspect --format '{{.State.Running}}' "$container" 2>> $BAK_OUTPUT_EXTENDED)
+   if [ "$state" = "true" ]; then
+      $ECHO_BIN "OK (0)" >> $BAK_OUTPUT
+      return 0
+   fi
+   $ECHO_BIN "FAIL (1)" >> $BAK_OUTPUT
+   return 1
+}
+
+##################################################################
+# postgresql_docker_list_databases "container"
+#  Print one database name per line.
+##################################################################
+postgresql_docker_list_databases() {
+   local container="$1"
+   $DOCKER_BIN exec "$container" psql --list -t -A -x -U "$BAK_POSTGRESQL_DOCKER_USER" \
+      | $GREP_BIN '^Name' | $CUT_BIN -d'|' -f2
+}
+
+##################################################################
+# postgresql_docker_dump "container" "database"
+#  Emit a plain-format SQL dump of <database> on stdout.
+##################################################################
+postgresql_docker_dump() {
+   local container="$1"
+   local database="$2"
+   $DOCKER_BIN exec "$container" pg_dump -U "$BAK_POSTGRESQL_DOCKER_USER" -Fp "$database"
+}
+
+##################################################################
+# postgresql_docker_databases_backup
+#  Backup PostgreSQL databases from each container in
+#  BAK_POSTGRESQL_DOCKER_CONTAINERS via "docker exec pg_dump".
+#  Output goes to $BAK_POSTGRESQL_DATABASE_PATH using filenames
+#  ${BAK_DATE}-${container}-${db}.sql so it coexists with host dumps.
+##################################################################
+postgresql_docker_databases_backup() {
+   local error=0
+
+   $ECHO_BIN >> $BAK_OUTPUT
+   $ECHO_BIN "Backup PostgreSQL Docker Databases" >> $BAK_OUTPUT
+
+   if [ "${BAK_POSTGRESQL_DOCKER_ENABLED:-0}" -eq 0 ]; then
+      $ECHO_BIN "   Disabled by configuration" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   if [ "${BAK_POSTGRESQL_DOCKER_ENABLED}" -eq 2 ]; then
+      $ECHO_BIN "   Disabled because docker binary not found" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   if [ ${#BAK_POSTGRESQL_DOCKER_CONTAINERS[@]} -eq 0 ]; then
+      $ECHO_BIN "   No containers configured" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   local container=
+   local db=
+   local file=
+   local db_error=0
+   local size=0
+   for container in "${BAK_POSTGRESQL_DOCKER_CONTAINERS[@]}"; do
+      if ! postgresql_docker_check "$container"; then
+         if [ "${BAK_POSTGRESQL_DOCKER_WARNING_IF_DOWN}" -eq 1 ]; then
+            $ECHO_BIN "   WARNING - Container '$container' is not running" >> $BAK_OUTPUT
+            continue
+         fi
+         $ECHO_BIN "   FAIL - Container '$container' is not running" >> $BAK_OUTPUT
+         error=1
+         continue
+      fi
+
+      for db in $(postgresql_docker_list_databases "$container"); do
+         if $(contains "${BAK_POSTGRESQL_DATABASE_DISALLOW[@]}" "$db"); then
+            continue
+         fi
+
+         $ECHO_BIN -n "   ${container}/${db} ... " >> $BAK_OUTPUT
+
+         if [ "${BAK_POSTGRESQL_DATABASE_ALLOW_ALL}" -eq 1 ] \
+            || $(contains "${BAK_POSTGRESQL_DATABASE_ALLOW[@]}" "$db"); then
+            file="$BAK_POSTGRESQL_DATABASE_PATH/${BAK_DATE}-${container}-${db}.sql"
+            $ECHO_BIN " CMD : postgresql_docker_dump $container $db > '$file'" >> $BAK_OUTPUT_EXTENDED
+            postgresql_docker_dump "$container" "$db" > "$file" 2>> $BAK_OUTPUT_EXTENDED
+            db_error=$?
+            if [ $db_error -eq 0 ]; then
+               $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+               size=$(file_size "$file")
+               $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+            else
+               $ECHO_BIN "FAIL (error = $db_error)" >> $BAK_OUTPUT
+               error=1
+            fi
+         else
+            $ECHO_BIN "SKIPPED" >> $BAK_OUTPUT
+         fi
+      done
+   done
+
+   if [ $error -eq 0 ]; then
+      backup_process "$BAK_POSTGRESQL_DATABASE_PATH" "${BAK_DATE}-postgresql-docker"
+   fi
+
+   return $error
+}
+
+##################################################################
+# postgresql_docker_databases_list
+#  Print "container/db" pairs that would be backed up. Used by the
+#  end-of-run report.
+##################################################################
+postgresql_docker_databases_list() {
+   if [ "${BAK_POSTGRESQL_DOCKER_ENABLED:-0}" -ne 1 ]; then
+      return 0
+   fi
+   local container=
+   local db=
+   for container in "${BAK_POSTGRESQL_DOCKER_CONTAINERS[@]}"; do
+      for db in $(postgresql_docker_list_databases "$container"); do
+         if $(contains "${BAK_POSTGRESQL_DATABASE_DISALLOW[@]}" "$db"); then
+            continue
+         fi
+         if [ "${BAK_POSTGRESQL_DATABASE_ALLOW_ALL}" -eq 1 ] \
+            || $(contains "${BAK_POSTGRESQL_DATABASE_ALLOW[@]}" "$db"); then
+            $ECHO_BIN "${container}/${db}"
+         fi
+      done
+   done
 }
 
 ##################################################################
@@ -1529,6 +1669,11 @@ config_show() {
       done
    fi
 
+   postgresql_docker_databases=$(postgresql_docker_databases_list)
+   if [ -z "$postgresql_docker_databases" ]; then
+      postgresql_docker_databases='None'
+   fi
+
    if [ $BAK_CONFIG_ENABLED -eq 0 ]; then
       server='Disabled by configuration'
    else
@@ -1627,6 +1772,10 @@ $mysql_databases
 PostgreSQL Databases:
 -------------------------------------------------
 $postgresql_databases
+
+PostgreSQL Docker Databases:
+============================
+$postgresql_docker_databases
 
 Data:
 -------------------------------------------------
