@@ -558,7 +558,7 @@ postgresql_docker_check() {
 ##################################################################
 postgresql_docker_list_databases() {
    local container="$1"
-   $DOCKER_BIN exec -u postgres "$container" psql --list -t -A -x \
+   $DOCKER_BIN exec -u "$BAK_POSTGRESQL_DOCKER_USER" "$container" psql --list -t -A -x \
       | $GREP_BIN '^Name' | $CUT_BIN -d'|' -f2
 }
 
@@ -569,7 +569,7 @@ postgresql_docker_list_databases() {
 postgresql_docker_dump() {
    local container="$1"
    local database="$2"
-   $DOCKER_BIN exec -u postgres "$container" pg_dump -Fp "$database"
+   $DOCKER_BIN exec -u "$BAK_POSTGRESQL_DOCKER_USER" "$container" pg_dump -Fp "$database"
 }
 
 ##################################################################

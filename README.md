@@ -243,12 +243,16 @@ BAK_POSTGRESQL_DATABASE_PREFIX=host
 BAK_POSTGRESQL_DOCKER_CONTAINERS=("pg-app" "pg-analytics")
 BAK_POSTGRESQL_DOCKER_ENABLED=1
 BAK_POSTGRESQL_DOCKER_WARNING_IF_DOWN=0
+
+# Override if the container's PostgreSQL superuser is not "postgres"
+BAK_POSTGRESQL_DOCKER_USER=postgres
 ```
 
 Each container must be running. The backup runs
-`docker exec -u postgres <container> pg_dump -Fp <db>`, so the
-container needs the standard `postgres` superuser with local-socket
-trust auth (true for the official `postgres` image by default).
+`docker exec -u $BAK_POSTGRESQL_DOCKER_USER <container> pg_dump -Fp <db>`,
+so that user needs local-socket trust auth inside the container
+(true for the `postgres` user on the official `postgres` image by
+default).
 
 Allow/disallow lists (`BAK_POSTGRESQL_DATABASE_ALLOW_ALL`,
 `BAK_POSTGRESQL_DATABASE_ALLOW`, `BAK_POSTGRESQL_DATABASE_DISALLOW`)

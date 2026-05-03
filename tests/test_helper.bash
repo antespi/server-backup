@@ -45,6 +45,7 @@ load_main_lib() {
    export BAK_POSTGRESQL_DOCKER_ENABLED=0
    export BAK_POSTGRESQL_DOCKER_CONTAINERS=()
    export BAK_POSTGRESQL_DOCKER_WARNING_IF_DOWN=0
+   export BAK_POSTGRESQL_DOCKER_USER="postgres"
    export DOCKER_BIN="docker"
 }
 

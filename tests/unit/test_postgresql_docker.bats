@@ -84,6 +84,24 @@ EOS
    assert_output "exec -u postgres pg1 pg_dump -Fp mydb"
 }
 
+@test "postgresql_docker_dump: uses BAK_POSTGRESQL_DOCKER_USER override" {
+   local args_file="${TEST_TMP}/docker_args"
+   local stub="${TEST_TMP}/docker_stub.sh"
+   cat > "$stub" <<EOS
+#!/bin/bash
+echo "\$@" > "$args_file"
+EOS
+   chmod +x "$stub"
+   DOCKER_BIN="$stub"
+   BAK_POSTGRESQL_DOCKER_USER="dbadmin"
+
+   run postgresql_docker_dump pg1 mydb
+   assert_success
+
+   run cat "$args_file"
+   assert_output "exec -u dbadmin pg1 pg_dump -Fp mydb"
+}
+
 # ---- postgresql_docker_databases_backup ----
 
 @test "postgresql_docker_databases_backup: ENABLED=0 short-circuits" {
