@@ -83,3 +83,21 @@ EOS
    run cat "$args_file"
    assert_output "exec -u postgres pg1 pg_dump -Fp mydb"
 }
+
+# ---- postgresql_docker_databases_backup ----
+
+@test "postgresql_docker_databases_backup: ENABLED=0 short-circuits" {
+   BAK_POSTGRESQL_DOCKER_ENABLED=0
+   BAK_POSTGRESQL_DOCKER_CONTAINERS=("pg1")
+   run postgresql_docker_databases_backup
+   assert_success
+   run grep "Disabled by configuration" "$BAK_OUTPUT"
+   assert_success
+}
+
+@test "postgresql_docker_databases_backup: empty container list returns 0" {
+   BAK_POSTGRESQL_DOCKER_ENABLED=1
+   BAK_POSTGRESQL_DOCKER_CONTAINERS=()
+   run postgresql_docker_databases_backup
+   assert_success
+}

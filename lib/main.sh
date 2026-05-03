@@ -573,6 +573,37 @@ postgresql_docker_dump() {
 }
 
 ##################################################################
+# postgresql_docker_databases_backup
+#  Backup PostgreSQL databases from each container in
+#  BAK_POSTGRESQL_DOCKER_CONTAINERS via "docker exec pg_dump".
+#  Output goes to $BAK_POSTGRESQL_DATABASE_PATH using filenames
+#  ${BAK_DATE}-${container}-${db}.sql so it coexists with host dumps.
+##################################################################
+postgresql_docker_databases_backup() {
+   local error=0
+
+   $ECHO_BIN >> $BAK_OUTPUT
+   $ECHO_BIN "Backup PostgreSQL Docker Databases" >> $BAK_OUTPUT
+
+   if [ "${BAK_POSTGRESQL_DOCKER_ENABLED:-0}" -eq 0 ]; then
+      $ECHO_BIN "   Disabled by configuration" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   if [ "${BAK_POSTGRESQL_DOCKER_ENABLED}" -eq 2 ]; then
+      $ECHO_BIN "   Disabled because docker binary not found" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   if [ ${#BAK_POSTGRESQL_DOCKER_CONTAINERS[@]} -eq 0 ]; then
+      $ECHO_BIN "   No containers configured" >> $BAK_OUTPUT
+      return 0
+   fi
+
+   return $error
+}
+
+##################################################################
 # server_configuration_backup
 #  Backup server configuration files
 ##################################################################
