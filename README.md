@@ -223,6 +223,48 @@ Then you can manually decrypt and decompress it like this:
     # tar -xzf file.tar.gz
 
 
+PostgreSQL
+==========
+
+### PostgreSQL inside Docker
+
+`server-backup` can also dump databases from PostgreSQL instances running
+inside Docker containers, in the same backup run as the host instance.
+
+Configuration (in `config-dist/database.conf`):
+
+```bash
+DOCKER_BIN=/usr/bin/docker
+
+# Filename prefix for host dumps. Default: "host"
+BAK_POSTGRESQL_DATABASE_PREFIX=host
+
+# Containers to back up
+BAK_POSTGRESQL_DOCKER_CONTAINERS=("pg-app" "pg-analytics")
+BAK_POSTGRESQL_DOCKER_ENABLED=1
+BAK_POSTGRESQL_DOCKER_WARNING_IF_DOWN=0
+```
+
+Each container must be running. The backup runs
+`docker exec -u postgres <container> pg_dump -Fp <db>`, so the
+container needs the standard `postgres` superuser with local-socket
+trust auth (true for the official `postgres` image by default).
+
+Allow/disallow lists (`BAK_POSTGRESQL_DATABASE_ALLOW_ALL`,
+`BAK_POSTGRESQL_DATABASE_ALLOW`, `BAK_POSTGRESQL_DATABASE_DISALLOW`)
+are shared with the host instance and apply to every container.
+
+Output files: `${BAK_DATE}-${container}-${db}.sql` in
+`$BAK_POSTGRESQL_DATABASE_PATH`.
+
+#### Migration note
+
+Host PostgreSQL dump filenames now include a prefix segment:
+`${BAK_DATE}-${db}.sql` → `${BAK_DATE}-host-${db}.sql`.
+If you parse dump filenames downstream, update your patterns or change
+`BAK_POSTGRESQL_DATABASE_PREFIX` to match your existing convention.
+
+
 TODO
 ====
 
