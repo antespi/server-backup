@@ -101,3 +101,25 @@ EOS
    run postgresql_docker_databases_backup
    assert_success
 }
+
+@test "postgresql_docker_databases_backup: down + WARNING_IF_DOWN=1 returns 0 with warning" {
+   BAK_POSTGRESQL_DOCKER_ENABLED=1
+   BAK_POSTGRESQL_DOCKER_CONTAINERS=("pg1")
+   BAK_POSTGRESQL_DOCKER_WARNING_IF_DOWN=1
+   DOCKER_BIN="$(make_stub docker 0 'false')"
+   run postgresql_docker_databases_backup
+   assert_success
+   run grep "WARNING - Container 'pg1' is not running" "$BAK_OUTPUT"
+   assert_success
+}
+
+@test "postgresql_docker_databases_backup: down + WARNING_IF_DOWN=0 returns 1 with FAIL" {
+   BAK_POSTGRESQL_DOCKER_ENABLED=1
+   BAK_POSTGRESQL_DOCKER_CONTAINERS=("pg1")
+   BAK_POSTGRESQL_DOCKER_WARNING_IF_DOWN=0
+   DOCKER_BIN="$(make_stub docker 0 'false')"
+   run postgresql_docker_databases_backup
+   assert_failure
+   run grep "FAIL - Container 'pg1' is not running" "$BAK_OUTPUT"
+   assert_success
+}

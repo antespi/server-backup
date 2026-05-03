@@ -600,6 +600,19 @@ postgresql_docker_databases_backup() {
       return 0
    fi
 
+   local container=
+   for container in "${BAK_POSTGRESQL_DOCKER_CONTAINERS[@]}"; do
+      if ! postgresql_docker_check "$container"; then
+         if [ "${BAK_POSTGRESQL_DOCKER_WARNING_IF_DOWN}" -eq 1 ]; then
+            $ECHO_BIN "   WARNING - Container '$container' is not running" >> $BAK_OUTPUT
+            continue
+         fi
+         $ECHO_BIN "   FAIL - Container '$container' is not running" >> $BAK_OUTPUT
+         error=1
+         continue
+      fi
+   done
+
    return $error
 }
 
