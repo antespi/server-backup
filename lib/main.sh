@@ -535,6 +535,24 @@ postgresql_datafiles_backup() {
 }
 
 ##################################################################
+# postgresql_docker_check "container"
+#  Return 0 if the container is running, 1 otherwise.
+##################################################################
+postgresql_docker_check() {
+   local container="$1"
+   local state=
+   $ECHO_BIN -n "PostgreSQL Docker '$container' status: " >> $BAK_OUTPUT
+   $ECHO_BIN "- PostgreSQL Docker '$container' Status -----------------" >> $BAK_OUTPUT_EXTENDED
+   state=$($DOCKER_BIN inspect --format '{{.State.Running}}' "$container" 2>> $BAK_OUTPUT_EXTENDED)
+   if [ "$state" = "true" ]; then
+      $ECHO_BIN "OK (0)" >> $BAK_OUTPUT
+      return 0
+   fi
+   $ECHO_BIN "FAIL (1)" >> $BAK_OUTPUT
+   return 1
+}
+
+##################################################################
 # server_configuration_backup
 #  Backup server configuration files
 ##################################################################
