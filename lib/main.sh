@@ -553,6 +553,16 @@ postgresql_docker_check() {
 }
 
 ##################################################################
+# postgresql_docker_list_databases "container"
+#  Print one database name per line.
+##################################################################
+postgresql_docker_list_databases() {
+   local container="$1"
+   $DOCKER_BIN exec -u postgres "$container" psql --list -t -A -x \
+      | $GREP_BIN '^Name' | $CUT_BIN -d'|' -f2
+}
+
+##################################################################
 # server_configuration_backup
 #  Backup server configuration files
 ##################################################################

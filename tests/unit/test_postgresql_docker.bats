@@ -45,3 +45,19 @@ teardown() { rm -rf "$TEST_TMP"; }
    run postgresql_docker_check pg1
    assert_failure
 }
+
+# ---- postgresql_docker_list_databases ----
+
+@test "postgresql_docker_list_databases: parses psql --list output" {
+   # psql -l -t -A -x produces "Name|<db>" lines among others
+   local fixture="Name|app
+Owner|postgres
+Encoding|UTF8
+Name|otherdb
+Owner|postgres"
+   DOCKER_BIN="$(make_stub docker 0 "$fixture")"
+   run postgresql_docker_list_databases pg1
+   assert_success
+   assert_output --partial "app"
+   assert_output --partial "otherdb"
+}
