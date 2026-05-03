@@ -448,7 +448,7 @@ postgresql_databases_backup() {
       $ECHO_BIN -n "   $i ... " >> $BAK_OUTPUT
 
       if [ $BAK_POSTGRESQL_DATABASE_ALLOW_ALL -eq 1 ] || $(contains "${BAK_POSTGRESQL_DATABASE_ALLOW[@]}" "$i"); then
-         file="$BAK_POSTGRESQL_DATABASE_PATH/${BAK_DATE}-${i}.sql"
+         file="$BAK_POSTGRESQL_DATABASE_PATH/${BAK_DATE}-${BAK_POSTGRESQL_DATABASE_PREFIX}-${i}.sql"
          if [ $BAK_DEBUG -eq 1 ]; then
             $ECHO_BIN -n "$BAK_POSTGRESQL_DATABASE_BACKUP_CMD $i > '$file' ... " >> $BAK_OUTPUT
          else
