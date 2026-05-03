@@ -123,3 +123,82 @@ EOS
    run grep "FAIL - Container 'pg1' is not running" "$BAK_OUTPUT"
    assert_success
 }
+
+# Build a docker stub that replays canned output based on argv:
+#   "inspect --format ..." -> "true"
+#   "exec -u postgres <c> psql --list ..." -> list of dbs
+#   "exec -u postgres <c> pg_dump -Fp <db>" -> "-- SQL <db> --"
+make_docker_running_stub() {
+   local stub="${TEST_TMP}/docker_running.sh"
+   cat > "$stub" <<'EOS'
+#!/bin/bash
+case "$1" in
+   inspect) echo "true" ;;
+   exec)
+      shift; shift; shift; shift  # drop "exec -u postgres <container>"
+      case "$1" in
+         psql) echo "Name|app"; echo "Name|skipme"; echo "Name|allowed" ;;
+         pg_dump) echo "-- SQL ${3} --" ;;
+      esac
+      ;;
+esac
+EOS
+   chmod +x "$stub"
+   echo "$stub"
+}
+
+@test "postgresql_docker_databases_backup: dumps allowed dbs with container prefix" {
+   BAK_POSTGRESQL_DOCKER_ENABLED=1
+   BAK_POSTGRESQL_DOCKER_CONTAINERS=("pg1")
+   BAK_POSTGRESQL_DATABASE_ALLOW_ALL=1
+   BAK_POSTGRESQL_DATABASE_DISALLOW=("skipme")
+   DOCKER_BIN="$(make_docker_running_stub)"
+
+   run postgresql_docker_databases_backup
+   assert_success
+
+   assert_file_exists "${BAK_POSTGRESQL_DATABASE_PATH}/${BAK_DATE}-pg1-app.sql"
+   assert_file_exists "${BAK_POSTGRESQL_DATABASE_PATH}/${BAK_DATE}-pg1-allowed.sql"
+   assert_file_not_exists "${BAK_POSTGRESQL_DATABASE_PATH}/${BAK_DATE}-pg1-skipme.sql"
+}
+
+@test "postgresql_docker_databases_backup: ALLOW_ALL=0 only dumps allowed dbs" {
+   BAK_POSTGRESQL_DOCKER_ENABLED=1
+   BAK_POSTGRESQL_DOCKER_CONTAINERS=("pg1")
+   BAK_POSTGRESQL_DATABASE_ALLOW_ALL=0
+   BAK_POSTGRESQL_DATABASE_ALLOW=("allowed")
+   BAK_POSTGRESQL_DATABASE_DISALLOW=()
+   DOCKER_BIN="$(make_docker_running_stub)"
+
+   run postgresql_docker_databases_backup
+   assert_success
+
+   assert_file_exists "${BAK_POSTGRESQL_DATABASE_PATH}/${BAK_DATE}-pg1-allowed.sql"
+   assert_file_not_exists "${BAK_POSTGRESQL_DATABASE_PATH}/${BAK_DATE}-pg1-app.sql"
+}
+
+@test "postgresql_docker_databases_backup: writes content from pg_dump stub into sql file" {
+   BAK_POSTGRESQL_DOCKER_ENABLED=1
+   BAK_POSTGRESQL_DOCKER_CONTAINERS=("pg1")
+   BAK_POSTGRESQL_DATABASE_ALLOW_ALL=1
+   BAK_POSTGRESQL_DATABASE_DISALLOW=()
+   DOCKER_BIN="$(make_docker_running_stub)"
+
+   postgresql_docker_databases_backup || true
+
+   run cat "${BAK_POSTGRESQL_DATABASE_PATH}/${BAK_DATE}-pg1-app.sql"
+   assert_output --partial "-- SQL app --"
+}
+
+@test "postgresql_docker_databases_backup: multiple containers each get their prefix" {
+   BAK_POSTGRESQL_DOCKER_ENABLED=1
+   BAK_POSTGRESQL_DOCKER_CONTAINERS=("pg1" "pg2")
+   BAK_POSTGRESQL_DATABASE_ALLOW_ALL=1
+   BAK_POSTGRESQL_DATABASE_DISALLOW=("skipme")
+   DOCKER_BIN="$(make_docker_running_stub)"
+
+   postgresql_docker_databases_backup || true
+
+   assert_file_exists "${BAK_POSTGRESQL_DATABASE_PATH}/${BAK_DATE}-pg1-app.sql"
+   assert_file_exists "${BAK_POSTGRESQL_DATABASE_PATH}/${BAK_DATE}-pg2-app.sql"
+}

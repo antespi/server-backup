@@ -601,6 +601,10 @@ postgresql_docker_databases_backup() {
    fi
 
    local container=
+   local db=
+   local file=
+   local db_error=0
+   local size=0
    for container in "${BAK_POSTGRESQL_DOCKER_CONTAINERS[@]}"; do
       if ! postgresql_docker_check "$container"; then
          if [ "${BAK_POSTGRESQL_DOCKER_WARNING_IF_DOWN}" -eq 1 ]; then
@@ -611,7 +615,37 @@ postgresql_docker_databases_backup() {
          error=1
          continue
       fi
+
+      for db in $(postgresql_docker_list_databases "$container"); do
+         if $(contains "${BAK_POSTGRESQL_DATABASE_DISALLOW[@]}" "$db"); then
+            continue
+         fi
+
+         $ECHO_BIN -n "   ${container}/${db} ... " >> $BAK_OUTPUT
+
+         if [ "${BAK_POSTGRESQL_DATABASE_ALLOW_ALL}" -eq 1 ] \
+            || $(contains "${BAK_POSTGRESQL_DATABASE_ALLOW[@]}" "$db"); then
+            file="$BAK_POSTGRESQL_DATABASE_PATH/${BAK_DATE}-${container}-${db}.sql"
+            $ECHO_BIN " CMD : postgresql_docker_dump $container $db > '$file'" >> $BAK_OUTPUT_EXTENDED
+            postgresql_docker_dump "$container" "$db" > "$file" 2>> $BAK_OUTPUT_EXTENDED
+            db_error=$?
+            if [ $db_error -eq 0 ]; then
+               $ECHO_BIN -n "OK" >> $BAK_OUTPUT
+               size=$(file_size "$file")
+               $ECHO_BIN " ($size)" >> $BAK_OUTPUT
+            else
+               $ECHO_BIN "FAIL (error = $db_error)" >> $BAK_OUTPUT
+               error=1
+            fi
+         else
+            $ECHO_BIN "SKIPPED" >> $BAK_OUTPUT
+         fi
+      done
    done
+
+   if [ $error -eq 0 ]; then
+      backup_process "$BAK_POSTGRESQL_DATABASE_PATH" "${BAK_DATE}-postgresql-docker"
+   fi
 
    return $error
 }
